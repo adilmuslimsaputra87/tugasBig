@@ -149,7 +149,7 @@
 <body>
     <div class="admin-page">
         <div class="admin-header">
-            <a href="/admin/konsers"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <a href="/admin"><i class="fas fa-arrow-left"></i> Kembali</a>
             <h1 class="admin-title">TAMBAH KONSER</h1>
         </div>
 
@@ -312,7 +312,7 @@
             <div class="btn-group">
                 <button type="submit" class="btn-submit text-dark"><i class="fas fa-save"></i>&nbsp; SIMPAN
                     KONSER</button>
-                <a href="/admin/konsers" class="btn-back"><i class="fas fa-times"></i>&nbsp; BATAL</a>
+                <a href="/admin" class="btn-back"><i class="fas fa-times"></i>&nbsp; BATAL</a>
             </div>
         </form>
 

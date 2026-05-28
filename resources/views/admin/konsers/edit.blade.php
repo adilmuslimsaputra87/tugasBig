@@ -34,7 +34,7 @@
 <body>
     <div class="admin-page">
         <div class="admin-header">
-            <a href="/admin/konsers"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <a href="/admin"><i class="fas fa-arrow-left"></i> Kembali</a>
             <h1 class="admin-title">EDIT KONSER</h1>
         </div>
 
@@ -161,7 +161,7 @@
 
             <div class="btn-group">
                 <button type="submit" class="btn-submit"><i class="fas fa-save"></i>&nbsp; PERBARUI KONSER</button>
-                <a href="/admin/konsers" class="btn-back"><i class="fas fa-times"></i>&nbsp; BATAL</a>
+                <a href="/admin" class="btn-back"><i class="fas fa-times"></i>&nbsp; BATAL</a>
             </div>
         </form>
     </div>

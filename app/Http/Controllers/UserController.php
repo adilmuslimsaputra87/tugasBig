@@ -16,7 +16,7 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('admin');
+        return view('admin.users.create');
     }
 
     public function store(Request $request)
@@ -33,11 +33,10 @@ class UserController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
 
-        $user = User::create($validated);
+     $user = User::create($validated);
 
-        return view('admin');
+        return redirect('/admin')->with('success', 'User baru berhasil ditambahkan!');
     }
-
     public function show(User $user)
     {
         return response()->json($user);
@@ -66,15 +65,16 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+$user->update($validated);
 
-        return view('admin');
+        // Alihkan kembali ke halaman utama setelah edit user selesai
+        return redirect('/admin')->with('success', 'Data user berhasil diperbarui!');
     }
-
     public function destroy(User $user)
     {
         $user->delete();
 
-        return view('admin');
+        // Alihkan kembali ke halaman utama setelah user berhasil dihapus
+        return redirect('/admin')->with('success', 'User berhasil dihapus!');
     }
 }

@@ -35,9 +35,9 @@ class ArtistController extends Controller
             $validated['image'] = $path;
         }
 
-        $artist = Artist::create($validated);
+       $artist = Artist::create($validated);
 
-        return view('admin');
+        return redirect('/admin')->with('success', 'Artis berhasil ditambahkan!');
     }
 
     public function show(Artist $artist)
@@ -67,15 +67,15 @@ class ArtistController extends Controller
             $validated['image'] = $path;
         }
 
-        $artist->update($validated);
+      $artist->update($validated);
 
-        return view('admin');
+        return redirect('/admin')->with('success', 'Artis berhasil diperbarui!');
     }
-
-    public function destroy(Artist $artist)
+   public function destroy(Artist $artist)
     {
         $artist->delete();
 
-        return view('admin');
+        // Alihkan halaman ke daftar artis setelah menghapus
+        return redirect('/admin/artists')->with('success', 'Artis berhasil dihapus!');
     }
 }

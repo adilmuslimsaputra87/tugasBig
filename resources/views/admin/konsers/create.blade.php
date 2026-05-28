@@ -247,13 +247,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Harga Mulai (Rp)</label>
-                    <input type="number" name="price" class="form-input" placeholder="500000"
-                        value="{{ old('price') }}" min="0" required>
-                    @error('price')
-                        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
-                    @enderror
-                </div>
+    <label class="form-label">Harga Mulai (Rp)</label>
+    <input type="text" name="price" id="price" class="form-input" placeholder="500.000"
+        value="{{ old('price') ? number_format(old('price'), 0, ',', '.') : '' }}" required
+        oninput="formatRupiah(this)">
+
+    @error('price')
+        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
+    @enderror
+</div>
             </div>
 
             <div class="form-group form-row-full">
@@ -327,6 +329,28 @@
             </div>
         @endif
     </div>
+    <script>
+        function formatRupiah(element) {
+    // Ambil value, hilangkan semua karakter selain angka
+    let value = element.value.replace(/[^,\d]/g, '').toString();
+
+    // Lakukan memformat angka dengan titik setiap 3 digit
+    let split = value.split(',');
+    let sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+    if (ribuan) {
+        let separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+
+    // Masukkan kembali hasil format ke dalam input
+    element.value = rupiah;
+}
+    </script>
 </body>
 
 </html>

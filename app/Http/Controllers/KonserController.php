@@ -26,6 +26,10 @@ class KonserController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('price')) {
+        $cleanPrice = str_replace('.', '', $request->price);
+        $request->merge(['price' => $cleanPrice]);
+    }
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'artist' => 'required|string|max:255',
@@ -49,9 +53,10 @@ class KonserController extends Controller
 
         // dd($validated);
 
-        $konser = Konser::create($validated);
+       $konser = Konser::create($validated);
 
-        return view('admin');
+        // Mengalihkan halaman kembali ke daftar utama admin
+        return redirect('/admin')->with('success', 'Konser berhasil ditambahkan!');
     }
 
     /**
@@ -95,8 +100,8 @@ class KonserController extends Controller
 
         $konser->update($validated);
 
-        return view('admin');
-
+        // Mengalihkan halaman kembali ke daftar utama admin
+        return redirect('/admin')->with('success', 'Konser berhasil diperbarui!');
     }
 
     /**

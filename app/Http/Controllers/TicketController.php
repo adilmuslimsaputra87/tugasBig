@@ -33,9 +33,9 @@ class TicketController extends Controller
             'max_purchase' => 'required|integer|min:1|max:100',
         ]);
 
-        $ticket = Ticket::create($validated);
+       $ticket = Ticket::create($validated);
 
-        return view('admin');
+        return redirect('/admin')->with('success', 'Kategori tiket berhasil ditambahkan!');
     }
 
     public function show(Ticket $ticket)
@@ -62,20 +62,18 @@ class TicketController extends Controller
             'max_purchase' => 'required|integer|min:1|max:100',
         ]);
 
-        $ticket->update($validated);
+     $ticket->update($validated);
 
-        return view('admin');
+        return redirect('/admin')->with('success', 'Kategori tiket berhasil diperbarui!');
     }
 
-    public function destroy(Ticket $ticket)
+public function destroy(Ticket $ticket)
     {
         $ticket->delete();
 
-        return response()->json([
-            'message' => 'Tiket berhasil dihapus'
-        ]);
+        // Ganti ke ini jika tombol hapus Anda menggunakan Form HTML biasa
+        return redirect('/admin/tickets')->with('success', 'Tiket berhasil dihapus!');
     }
-
     public function getByKonser($konserID)
     {
         $tickets = Ticket::where('konser_id', $konserID)->get();

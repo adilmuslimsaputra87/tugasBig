@@ -22,15 +22,15 @@
                         class="fas fa-chart-pie"></i> Dashboard</div>
                 <div class="admin-sidebar-title">Master Data</div>
                 <div class="admin-nav-item" id="adm-concerts" onclick="switchAdmin('concerts')"><i
-                        class="fas fa-music"></i> Konser <span class="admin-nav-badge">24</span></div>
+                        class="fas fa-music"></i> Konser <span class="admin-nav-badge">{{ count($konser ?? []) }}</span></div>
                 <div class="admin-nav-item" id="adm-artists" onclick="switchAdmin('artists')"><i
-                        class="fas fa-microphone"></i> Artis <span class="admin-nav-badge">18</span></div>
+                        class="fas fa-microphone"></i> Artis <span class="admin-nav-badge">{{ count($artists ?? []) }} ??</span></div>
                 <div class="admin-nav-item" id="adm-tickets" onclick="switchAdmin('tickets')"><i
                         class="fas fa-ticket-alt"></i> Tiket</div>
                 <div class="admin-sidebar-title">Transaksi</div>
                 <div class="admin-nav-item" id="adm-transactions" onclick="switchAdmin('transactions')"><i
                         class="fas fa-receipt"></i> Transaksi <span class="admin-nav-badge"
-                        style="background:#22c55e;">12</span></div>
+                        style="background:#22c55e;">{{ count($transactions ?? []) }} ??</span></div>
                 <div class="admin-nav-item" id="adm-users" onclick="switchAdmin('users')"><i class="fas fa-users"></i>
                     Users</div>
                 <div class="admin-sidebar-title">Media</div>
@@ -53,7 +53,7 @@
                     <div class="stat-cards">
                         <div class="stat-card">
                             <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
-                            <div class="stat-card-value">12,847</div>
+                            <div class="stat-card-value">{{ count($transactions ?? []) }}</div>
                             <div class="stat-card-label">Total Tiket Terjual</div>
                             <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> +14.5% dari bulan lalu
                             </div>
@@ -67,13 +67,13 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-icon"><i class="fas fa-music"></i></div>
-                            <div class="stat-card-value">24</div>
+                            <div class="stat-card-value">{{ count($konser ?? []) }}</div>
                             <div class="stat-card-label">Konser Aktif</div>
                             <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> +3 konser baru</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-icon"><i class="fas fa-users"></i></div>
-                            <div class="stat-card-value">8,543</div>
+                            <div class="stat-card-value">{{ count($users ?? []) }}</div>
                             <div class="stat-card-label">Total User</div>
                             <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> +156 baru hari ini</div>
                         </div>

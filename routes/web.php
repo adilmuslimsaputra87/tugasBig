@@ -6,10 +6,9 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TransaksiController;
 
-Route::get('/dashboard', function () {
-    return view('welcome');
-});
+Route::get('/dashboard',[UserController::class, 'dashboard'])->name('dashboard');
 
 Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
@@ -43,6 +42,8 @@ Route::post('api/tickets', [TicketController::class, 'store']);
 Route::put('api/tickets/{ticket}', [TicketController::class, 'update']);
 Route::delete('api/tickets/{ticket}', [TicketController::class, 'destroy']);
 
+Route::get('api/tickets/konser/{konserId}', [TicketController::class, 'getHarga']);
+
 // User Routes
 Route::resource('users', UserController::class);
 Route::get('api/users', [UserController::class, 'index']);
@@ -62,3 +63,10 @@ Route::get('admin/tickets', function() {
 Route::get('admin/users', function() {
     return view('welcome');
 });
+
+Route::get('/beli-tiket', [TransaksiController::class, 'index'])->name('beli-tiket');
+Route::post('/beli-tiket', [TransaksiController::class, 'store'])->name('beli-tiket.store');
+
+Route::post('/login', [UserController::class, 'login'])->name('login');
+Route::post('/register', [UserController::class, 'register'])->name('register');
+Route::post('/logout', [UserController::class, 'logout']);

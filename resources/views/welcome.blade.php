@@ -30,21 +30,30 @@
       <i class="fas fa-search nav-search-icon"></i>
       <input type="text" class="nav-search" placeholder="Cari konser...">
     </div>
+
+    @guest
     <div id="nav-auth-btns">
       <button class="btn-login" onclick="openModal('login')" style="margin-right:8px;">Masuk</button>
       <button class="btn-signup" onclick="openModal('register')">Daftar</button>
     </div>
-    <div id="nav-user" style="display:none;">
+    @endguest
+
+    @auth
+    <div id="nav-user">
       <div class="nav-avatar">
-        <span id="nav-avatar-initial">A</span>
+        <span id="nav-avatar-initial">PS</span>
         <div class="nav-dropdown">
           <div class="nav-dd-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profil Saya</div>
           <div class="nav-dd-item" onclick="navigate('history')"><i class="fas fa-ticket-alt"></i> Tiket Saya</div>
+          @if(auth()->user()->role === 'admin')
           <div class="nav-dd-item" onclick="navigate('admin')"><i class="fas fa-shield-alt"></i> Admin Panel</div>
+          @endif
           <div class="nav-dd-item" style="border-top:1px solid var(--border);margin-top:4px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar</div>
         </div>
       </div>
     </div>
+    @endauth
+
   </div>
 </nav>
 
@@ -521,37 +530,46 @@
     <div class="modal-title">PRIMESTAGE</div>
     <div class="modal-subtitle">Platform tiket konser premium</div>
     <div class="modal-tabs">
+      @if (auth()->check())
+        <div class="modal-tab active" id="tab-profile" onclick="switchAuthTab('profile')">Profil</div>
+        <div class="modal-tab" id="tab-logout" onclick="logout()">Keluar</div>
+      @else
       <div class="modal-tab active" id="tab-login" onclick="switchAuthTab('login')">Masuk</div>
       <div class="modal-tab" id="tab-register" onclick="switchAuthTab('register')">Daftar</div>
+      @endif
     </div>
     <!-- Login Form -->
-    <div id="auth-login-form">
-      <div class="form-social">
-        <button class="btn-social" onclick="loginDemo()"><i class="fab fa-google" style="color:#ea4335;"></i> Google</button>
-        <button class="btn-social"><i class="fab fa-facebook" style="color:#1877f2;"></i> Facebook</button>
-      </div>
-      <div class="form-divider"><span>atau dengan email</span></div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="login-email" placeholder="email@example.com"></div>
-      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <label class="form-checkbox"><input type="checkbox"> Ingat saya</label>
-        <span style="font-size:12px;color:var(--red);cursor:pointer;">Lupa password?</span>
-      </div>
-      <button class="btn-submit" onclick="loginUser()">MASUK</button>
-    </div>
+     <form action="{{ route('login') }}" method="post">
+      @csrf
+       <div id="auth-login-form">
+         <div class="form-social">
+           <button class="btn-social" type="button" onclick="loginWithGoogle()"><i class="fab fa-google" style="color:#ea4335;"></i> Google</button>
+           <button class="btn-social" type="button" onclick="loginWithFacebook()"><i class="fab fa-facebook" style="color:#1877f2;"></i> Facebook</button>
+         </div>
+         <div class="form-divider"><span>atau dengan email</span></div>
+         <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="login-email" name="email" placeholder="email@example.com"></div>
+         <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" name="password" placeholder="••••••••"></div>
+         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+           <span style="font-size:12px;color:var(--red);cursor:pointer;">Lupa password?</span>
+         </div>
+         <button class="btn-submit" type="submit">MASUK</button>
+       </div>
+     </form>
     <!-- Register Form -->
-    <div id="auth-register-form" style="display:none;">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Nama Depan</label><input class="form-input" type="text" id="reg-firstname" placeholder="John"></div>
-        <div class="form-group"><label class="form-label">Nama Belakang</label><input class="form-input" type="text" id="reg-lastname" placeholder="Doe"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="email@example.com"></div>
-      <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input" type="tel" placeholder="+62 812 3456 7890"></div>
-      <div class="form-group"><label class="form-label">Tanggal Lahir</label><input class="form-input" type="date" id="reg-dob"></div>
-      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="Min. 8 karakter"></div>
-      <div class="form-group"><label class="form-label">Konfirmasi Password</label><input class="form-input" type="password" placeholder="Ulangi password"></div>
-      <label class="form-checkbox" style="margin-bottom:16px;"><input type="checkbox" required> Saya setuju dengan <span style="color:var(--red);">Syarat &amp; Ketentuan</span></label>
-      <button class="btn-submit" onclick="registerUser()">BUAT AKUN</button>
+    <form action="{{ route('register') }}" method="post">
+      @csrf
+      <div id="auth-register-form" style="display:none;">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nama Depan</label><input class="form-input" type="text" id="reg-firstname" placeholder="John"></div>
+          <div class="form-group"><label class="form-label">Nama Belakang</label><input class="form-input" type="text" id="reg-lastname" placeholder="Doe"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="email@example.com"></div>
+        <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input" type="tel" placeholder="+62 812 3456 7890"></div>
+        <div class="form-group"><label class="form-label">Tanggal Lahir</label><input class="form-input" type="date" id="reg-dob"></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="Min. 8 karakter"></div>
+        <div class="form-group"><label class="form-label">Konfirmasi Password</label><input class="form-input" type="password" placeholder="Ulangi password"></div>
+        <label class="form-checkbox" style="margin-bottom:16px;"><input type="checkbox" required> Saya setuju dengan <span style="color:var(--red);">Syarat &amp; Ketentuan</span></label>
+      <button class="btn-submit" type="submit">BUAT AKUN</button>
     </div>
   </div>
 </div>
@@ -580,6 +598,7 @@
 <div class="toast" id="toast-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="js/script.js"></script>
 </body>
 </html>

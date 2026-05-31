@@ -7,6 +7,7 @@ use App\Models\Artist;
 use App\Models\Konser;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Transaksi;
 
 class AdminController extends Controller
 {
@@ -16,7 +17,8 @@ class AdminController extends Controller
         $konser = Konser::all();
         $tickets = Ticket::all();
         $users = User::all();
+        $transaksi = Transaksi::all();
 
-        return view('admin', compact('artists', 'konser', 'tickets', 'users'));
+        return view('admin', compact('artists', 'konser', 'tickets', 'users','transaksi'));
     }
 }

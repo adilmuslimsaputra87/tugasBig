@@ -150,7 +150,7 @@ function concertCardHTML(c,i){
   const badge = c.status==='sold-out' ? '<span class="concert-card-badge sold-out">SOLD OUT</span>' : '<span class="concert-card-badge">ON SALE</span>';
   return `<div class="concert-card" onclick="openConcertDetail(${c.id})" data-artist="${c.artist.toLowerCase()}" data-genre="${c.genre.toLowerCase()}" data-city="${c.city.toLowerCase()}" data-type="${c.type}" data-price="${c.price}" data-aos style="animation-delay:${i*0.08}s">
     <div class="concert-card-img">
-      <img src="${c.img}" alt="${c.artist}" loading="lazy">
+      <img src="/storage/${c.img}" alt="${c.artist}" loading="lazy">
       <div class="concert-card-overlay"></div>
       ${badge}
       <div class="concert-card-wishlist" onclick="event.stopPropagation();toggleWishlist(this)"><i class="fas fa-heart"></i></div>
@@ -259,7 +259,7 @@ function openConcertDetail(id){
     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&q=80',
     'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&q=80',
     'https://images.unsplash.com/photo-1501612780327-45045538702b?w=300&q=80'];
-  document.getElementById('detail-gallery').innerHTML = galleryImgs.map(g=>`<div class="gallery-img"><img src="${g}" alt="gallery" loading="lazy"></div>`).join('');
+  document.getElementById('detail-gallery').innerHTML = galleryImgs.map(g=>`<div class="gallery-img"><img src="" alt="gallery" loading="lazy"></div>`).join('');
   document.getElementById('detail-trailer-thumb').src = c.img;
   document.getElementById('detail-trailer-title').textContent = c.artist+' — Official Trailer';
   const cats = document.getElementById('ticket-categories');
@@ -445,7 +445,7 @@ function buildConcertsTable(){
       <tbody>${konsersData.map((c,i)=>`
       <tr>
         <td>${i+1}</td>
-        <td><img class="concert-thumb" src="${c.img}" alt=""></td>
+        <td><img class="concert-thumb" src="/storage/${c.img}" alt=""></td>
         <td><div class="td-name">${c.title}</div></td>
         <td class="td-artist">${c.artist}</td>
         <td style="font-size:13px;">${c.date}</td>
@@ -683,11 +683,13 @@ function registerUser(){
 }
 
 function logout(){
-  currentUser = null;
-  document.getElementById('nav-auth-btns').style.display='flex';
-  document.getElementById('nav-user').style.display='none';
-  navigate('home');
-  showToast('info','Anda telah keluar');
+    axios.post('/logout')
+        .then(response => {
+            window.location.href = '/dashboard';
+        })
+        .catch(error => {
+            console.error('Logout Gagal = ', error);
+        })
 }
 
 // ====== CHECKOUT ======

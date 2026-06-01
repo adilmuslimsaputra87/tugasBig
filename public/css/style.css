@@ -66,7 +66,7 @@ input,select,textarea{font-family:var(--font-body);}
 .nav-dd-item:hover{background:var(--bg3);color:var(--red);}
 
 /* ====== HERO ====== */
-.hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;}
+.hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;padding-bottom:15px;}
 .hero-bg{position:absolute;inset:0;background:
   radial-gradient(ellipse at 70% 50%,rgba(229,9,20,0.15) 0%,transparent 60%),
   radial-gradient(ellipse at 20% 80%,rgba(229,9,20,0.08) 0%,transparent 50%),
@@ -147,7 +147,7 @@ input,select,textarea{font-family:var(--font-body);}
 .btn-book.disabled{background:#333;color:var(--gray);cursor:not-allowed;}
 
 /* ====== FEATURED BANNER ====== */
-.featured-banner{margin:0 5%;border-radius:var(--radius);overflow:hidden;position:relative;height:400px;cursor:pointer;background:linear-gradient(135deg,#1a0505,#0F0F0F);}
+.featured-banner{margin:0 5%;border-radius:var(--radius);overflow:hidden;position:relative;height:410px;cursor:pointer;background:linear-gradient(135deg,#1a0505,#0F0F0F);}
 .featured-banner-bg{position:absolute;inset:0;background:linear-gradient(to right,rgba(15,15,15,0.95) 30%,rgba(15,15,15,0.3) 100%);}
 .featured-banner-img{position:absolute;right:0;top:0;height:100%;width:65%;object-fit:cover;opacity:0.5;}
 .featured-banner-content{position:relative;z-index:2;padding:50px 50px;max-width:550px;}
@@ -243,6 +243,8 @@ input,select,textarea{font-family:var(--font-body);}
 .summary-row.total .summary-value{font-family:var(--font-head);font-size:24px;color:var(--red);}
 .btn-book-now{width:100%;background:var(--red);color:var(--white);padding:16px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:var(--transition);margin-top:20px;}
 .btn-book-now:hover{background:var(--red2);transform:translateY(-2px);box-shadow:var(--shadow-red);}
+.btn-batal{width:100%;background:var(--gray);color:var(--white);padding:16px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:var(--transition);margin-top:20px;}
+.btn-batal:hover{background:var(--gray2);transform:translateY(-2px);box-shadow:var(--shadow-gray);}
 
 /* ====== ARTISTS PAGE ====== */
 .artists-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:24px;padding:32px 5%;}

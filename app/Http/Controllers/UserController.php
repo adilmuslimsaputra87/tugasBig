@@ -6,12 +6,19 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Artist;
+use App\Models\Konser;
+use App\Models\Transaksi;
 
 class UserController extends Controller
 {
     public function dashboard()
     {
-        return view('welcome');
+        $konsers = Konser::all();
+        $transaksi = Transaksi::all();
+        $artists = Artist::all();
+
+        return view('welcome', compact('konsers', 'transaksi', 'artists'));
     }
 
     public function create()

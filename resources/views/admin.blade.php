@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body data-user-logged-in="{{ auth()->check() ? 'true' : 'false' }}">
 
     <!-- ====== ADMIN DASHBOARD ====== -->
     <div class="page-admin" id="page-admin">
@@ -22,17 +22,21 @@
                         class="fas fa-chart-pie"></i> Dashboard</div>
                 <div class="admin-sidebar-title">Master Data</div>
                 <div class="admin-nav-item" id="adm-concerts" onclick="switchAdmin('concerts')"><i
-                        class="fas fa-music"></i> Konser <span class="admin-nav-badge">{{ count($konser ?? []) }}</span></div>
+                        class="fas fa-music"></i> Konser <span class="admin-nav-badge">{{ count($konser ?? []) }}</span>
+                </div>
                 <div class="admin-nav-item" id="adm-artists" onclick="switchAdmin('artists')"><i
-                        class="fas fa-microphone"></i> Artis <span class="admin-nav-badge">{{ count($artists ?? []) }} ??</span></div>
+                        class="fas fa-microphone"></i> Artis <span class="admin-nav-badge">{{ count($artists ?? []) }}
+                        </span></div>
                 <div class="admin-nav-item" id="adm-tickets" onclick="switchAdmin('tickets')"><i
-                        class="fas fa-ticket-alt"></i> Tiket</div>
+                        class="fas fa-ticket-alt"></i> Tiket<span class="admin-nav-badge">{{ count($tickets ?? []) }}
+                        </span></div>
                 <div class="admin-sidebar-title">Transaksi</div>
                 <div class="admin-nav-item" id="adm-transactions" onclick="switchAdmin('transactions')"><i
                         class="fas fa-receipt"></i> Transaksi <span class="admin-nav-badge"
-                        style="background:#22c55e;">{{ count($transactions ?? []) }} ??</span></div>
+                        style="background:#22c55e;">{{ count($transaksi ?? []) }}</span></div>
                 <div class="admin-nav-item" id="adm-users" onclick="switchAdmin('users')"><i class="fas fa-users"></i>
-                    Users</div>
+                    Users<span class="admin-nav-badge"
+                        style="background:#22c55e;">{{ count($users ?? []) }}</span></div>
                 <div class="admin-sidebar-title">Media</div>
                 <div class="admin-nav-item" onclick="showToast('info','Fitur upload media')"><i
                         class="fas fa-upload"></i> Upload Media</div>
@@ -314,7 +318,47 @@
                         <div class="table-header">
                             <h3>SEMUA TRANSAKSI</h3>
                         </div>
-                        <table class="admin-table" id="admin-transactions-table"></table>
+                        <table class="admin-table" id="admin-transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Konser</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Tanggal</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($transaksi as $tx)
+                                    <tr>
+                                        <td><code style="color:var(--red);font-size:12px;">{{ $tx->id }}</code>
+                                        </td>
+                                        <td>{{ $tx->first_name }} {{ $tx->last_name }}</td>
+                                        <td style="font-size:13px;color:var(--gray);">
+                                            {{ $tx->ticket?->konser?->title ?? 'Konser Tidak Ditemukan' }}</td>
+                                        <td>{{ $tx->quantity }}</td>
+                                        <td><strong>Rp {{ number_format($tx->total_price, 0, ',', '.') }}</strong></td>
+                                        <td><span
+                                                class="status-badge {{ $tx->payment_status === 'success' ? 'status-success' : 'status-pending' }}">{{ strtoupper($tx->payment_status) }}</span>
+                                        </td>
+                                        <td style="font-size:13px;">
+                                            {{ $tx->payment_date ? \Carbon\Carbon::parse($tx->payment_date)->translatedFormat('Y-m-d') : '-' }}
+                                        </td>
+                                        <td>
+                                            <div class="td-actions">
+                                                <button class="btn-view" title="Detail {{ $tx->id }}"><i
+                                                        class="fas fa-eye"></i></button>
+                                                <button class="btn-edit" title="Perbarui Status"><i
+                                                        class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 

@@ -86,7 +86,6 @@ public function destroy(Ticket $ticket)
 
     $tickets = Ticket::where('konser_id', $konserID)->get();
 
-    // Kalau konser ada tapi tiketnya kosong, balikin array kosong [] dengan status 200
     return response()->json($tickets);
     }
 }

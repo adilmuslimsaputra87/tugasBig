@@ -33,4 +33,10 @@ class Ticket extends Model
     {
         return $this->belongsTo(Konser::class);
     }
+
+    public function transactions()
+{
+    return $this->hasMany(Transaction::class, 'tickets_id');
+}
+
 }

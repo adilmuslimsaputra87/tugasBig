@@ -68,6 +68,9 @@ Route::get('admin/users', function() {
 Route::get('/beli-tiket', [TransaksiController::class, 'index'])->name('beli-tiket');
 Route::post('/beli-tiket', [TransaksiController::class, 'store'])->name('beli-tiket.store');
 
+Route::get('/checkout', [TransaksiController::class, 'checkout']);
+Route::post('/simpanTransaksi', [TransaksiController::class, 'simpanTransaksi'])->name('simpanTransaksi');
+
 Route::post('/login', [UserController::class, 'login'])->name('login');
 Route::post('/register', [UserController::class, 'register'])->name('register');
 Route::post('/logout', [UserController::class, 'logout']);

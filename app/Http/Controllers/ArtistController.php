@@ -24,7 +24,7 @@ class ArtistController extends Controller
             'name' => 'required|string|max:255',
             'genre' => 'nullable|string|max:100',
             'country' => 'required|in:indonesia,internasional',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'bio' => 'nullable|string',
             'instagram' => 'nullable|string|max:100',
             'status' => 'required|in:active,inactive',

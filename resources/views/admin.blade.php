@@ -275,7 +275,7 @@
                                         <td>
                                             <div class="td-actions">
                                                 {{-- Tombol Edit --}}
-                                                <a class="btn-edit" href="/admin/tickets/{{ $t->id }}/edit">
+                                                <a class="btn-edit" href="/api/tickets/{{ $t->id }}/edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
 

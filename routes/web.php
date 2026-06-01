@@ -43,6 +43,7 @@ Route::put('api/tickets/{ticket}', [TicketController::class, 'update']);
 Route::delete('api/tickets/{ticket}', [TicketController::class, 'destroy']);
 
 Route::get('api/tickets/konser/{konserId}', [TicketController::class, 'getHarga']);
+Route::get('api/konsers/{konserId}/tickets', [TicketController::class, 'getByKonser']);
 
 // User Routes
 Route::resource('users', UserController::class);

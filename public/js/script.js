@@ -7,6 +7,22 @@ let selectedQty = 1;
 let selectedCategoryPrice = 0;
 let selectedTicketId = null;
 
+// Gallery images (global)
+const galleryImgs = [
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80",
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80",
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80",
+    "https://images.unsplash.com/photo-1501612780327-45045538702b?w=400&q=80",
+    "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&q=80",
+    "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&q=80",
+    "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80",
+    "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80",
+    "https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&q=80",
+    "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&q=80",
+    "https://images.unsplash.com/photo-1545128485-c400ce7b17eb?w=400&q=80",
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80",
+];
+
 // In-memory cache agar tidak fetch ulang terus-menerus
 let _concertsCache = null;
 let _artistsCache = null;
@@ -120,6 +136,70 @@ async function deleteKonserFromAPI(konserID) {
         method: "DELETE",
     });
     _concertsCache = null;
+    return result;
+}
+
+// ====== CRUD FUNCTIONS: ARTISTS ======
+async function saveArtistToAPI(isEdit = false, artistID = null) {
+    const payload = {
+        name: document.getElementById("artist-name")?.value || "",
+        genre: document.getElementById("artist-genre")?.value || "Pop",
+        origin: document.querySelector('input[name="artist-origin"]:checked')?.value || "indonesia",
+        bio: document.getElementById("artist-bio")?.value || "",
+        instagram: document.getElementById("artist-instagram")?.value || "",
+    };
+    
+    const method = isEdit ? "PUT" : "POST";
+    const url = isEdit ? `/api/artists/${artistID}` : "/api/artists";
+    const result = await apiFetch(url, {
+        method,
+        body: JSON.stringify(payload),
+    });
+    _artistsCache = null;
+    return result;
+}
+
+async function deleteArtistFromAPI(artistID) {
+    const result = await apiFetch(`/api/artists/${artistID}`, {
+        method: "DELETE",
+    });
+    _artistsCache = null;
+    return result;
+}
+
+// ====== CRUD FUNCTIONS: TICKETS ======
+async function saveTicketToAPI(isEdit = false, ticketID = null) {
+    const payload = {
+        konser_id: document.getElementById("cf-ticket-concert")?.value || "",
+        name: document.getElementById("ticket-name")?.value || "",
+        price: document.getElementById("ticket-price")?.value || 0,
+        stock: document.getElementById("ticket-stock")?.value || 0,
+        description: document.getElementById("ticket-desc")?.value || "",
+    };
+    
+    const method = isEdit ? "PUT" : "POST";
+    const url = isEdit ? `/api/tickets/${ticketID}` : "/api/tickets";
+    const result = await apiFetch(url, {
+        method,
+        body: JSON.stringify(payload),
+    });
+    _ticketCategoriesCache = null;
+    return result;
+}
+
+async function deleteTicketFromAPI(ticketID) {
+    const result = await apiFetch(`/api/tickets/${ticketID}`, {
+        method: "DELETE",
+    });
+    _ticketCategoriesCache = null;
+    return result;
+}
+
+// ====== CRUD FUNCTIONS: USERS ======
+async function deleteUserFromAPI(userID) {
+    const result = await apiFetch(`/api/users/${userID}`, {
+        method: "DELETE",
+    });
     return result;
 }
 
@@ -485,6 +565,7 @@ function openConcertDetail(id) {
                 .join("");
             selectTicketCat(
                 cats.firstElementChild,
+                ticketCategories[0].id,
                 ticketCategories[0].name,
                 ticketCategories[0].price,
             );
@@ -504,6 +585,12 @@ function selectTicketCat(el, id, name, price) {
     if (name != null) selectedCategory = name;
     if (price != null) selectedCategoryPrice = price;
     updateBookingSummary();
+}
+
+// ====== SEAT MAP ======
+function renderSeatMap() {
+    // Placeholder untuk render seat map - dapat diimplementasi lebih lanjut
+    console.log("Seat map rendered");
 }
 
 function changeQty(delta) {
@@ -639,20 +726,6 @@ function setArtistFilter(val, btn) {
 
 // ====== GALLERY PAGE ======
 function renderGallery() {
-    const galleryImgs = [
-        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80",
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80",
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80",
-        "https://images.unsplash.com/photo-1501612780327-45045538702b?w=400&q=80",
-        "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&q=80",
-        "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&q=80",
-        "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80",
-        "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80",
-        "https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&q=80",
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&q=80",
-        "https://images.unsplash.com/photo-1545128485-c400ce7b17eb?w=400&q=80",
-        "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80",
-    ];
     const g = document.getElementById("gallery-grid");
     if (g)
         g.innerHTML = galleryImgs
@@ -931,19 +1004,19 @@ function buildCrudForms(artists) {
       <button class="btn-submit" onclick="saveCrudForm('concert')">SIMPAN KONSER</button>`,
 
         artist: `
-      <div class="form-group"><label class="form-label">Nama Artis/Band</label><input class="form-input" type="text" placeholder="Nama artis..."></div>
+      <div class="form-group"><label class="form-label">Nama Artis/Band</label><input class="form-input" type="text" id="artist-name" placeholder="Nama artis..."></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Genre</label><select class="form-input"><option>Pop</option><option>Rock</option><option>R&B</option><option>Metal</option><option>Indie</option></select></div>
+        <div class="form-group"><label class="form-label">Genre</label><select class="form-input" id="artist-genre"><option>Pop</option><option>Rock</option><option>R&B</option><option>Metal</option><option>Indie</option></select></div>
         <div class="form-group"><label class="form-label">Asal</label>
           <div style="display:flex;gap:16px;margin-top:8px;">
-            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="artist-origin" checked style="accent-color:var(--red);"> Indonesia</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="artist-origin" style="accent-color:var(--red);"> Internasional</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="artist-origin" value="indonesia" checked style="accent-color:var(--red);"> Indonesia</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="artist-origin" value="internasional" style="accent-color:var(--red);"> Internasional</label>
           </div>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Foto Artis</label><input class="form-input" type="file" accept="image/*"></div>
-      <div class="form-group"><label class="form-label">Bio Singkat</label><textarea class="form-input" rows="3" placeholder="Ceritakan tentang artis..."></textarea></div>
-      <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" type="text" placeholder="@username"></div>
+      <div class="form-group"><label class="form-label">Foto Artis</label><input class="form-input" type="file" id="artist-image" accept="image/*"></div>
+      <div class="form-group"><label class="form-label">Bio Singkat</label><textarea class="form-input" id="artist-bio" rows="3" placeholder="Ceritakan tentang artis..."></textarea></div>
+      <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" type="text" id="artist-instagram" placeholder="@username"></div>
       <button class="btn-submit" onclick="saveCrudForm('artist')">SIMPAN ARTIS</button>`,
 
         ticket: `
@@ -952,32 +1025,32 @@ function buildCrudForms(artists) {
           <option value="">-- Memuat konser... --</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-input" type="text" placeholder="VVIP / VIP / Festival..."></div>
+      <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-input" type="text" id="ticket-name" placeholder="VVIP / VIP / Festival..."></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Harga (Rp)</label><input class="form-input" type="number" placeholder="750000" min="0"></div>
-        <div class="form-group"><label class="form-label">Stok</label><input class="form-input" type="number" placeholder="500" min="1"></div>
+        <div class="form-group"><label class="form-label">Harga (Rp)</label><input class="form-input" type="number" id="ticket-price" placeholder="750000" min="0"></div>
+        <div class="form-group"><label class="form-label">Stok</label><input class="form-input" type="number" id="ticket-stock" placeholder="500" min="1"></div>
       </div>
-      <div class="form-group"><label class="form-label">Deskripsi Area</label><input class="form-input" type="text" placeholder="Deskripsi area tiket..."></div>
+      <div class="form-group"><label class="form-label">Deskripsi Area</label><input class="form-input" type="text" id="ticket-desc" placeholder="Deskripsi area tiket..."></div>
       <div class="form-group"><label class="form-label">Harga Promo <span style="color:var(--gray);font-size:11px;">(opsional)</span></label>
         <div style="display:flex;gap:8px;align-items:center;">
-          <input class="form-input" type="number" placeholder="600000" style="flex:1;">
-          <input class="form-input" type="date" style="flex:1;" placeholder="Berlaku s/d">
+          <input class="form-input" type="number" id="ticket-promo-price" placeholder="600000" style="flex:1;">
+          <input class="form-input" type="date" id="ticket-promo-date" style="flex:1;" placeholder="Berlaku s/d">
         </div>
       </div>
       <div class="form-group"><label class="form-label">Batas Pembelian per User</label>
-        <input class="form-input" type="range" min="1" max="10" value="4" oninput="this.nextElementSibling.textContent='Max '+this.value+' tiket'" class="price-range" style="margin-top:8px;">
+        <input class="form-input" type="range" id="ticket-limit" min="1" max="10" value="4" oninput="this.nextElementSibling.textContent='Max '+this.value+' tiket'" class="price-range" style="margin-top:8px;">
         <div style="font-size:13px;color:var(--gray);margin-top:4px;">Max 4 tiket</div>
       </div>
       <button class="btn-submit" onclick="saveCrudForm('ticket')">SIMPAN TIKET</button>`,
 
         user: `
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Nama Depan</label><input class="form-input" type="text" placeholder="John"></div>
-        <div class="form-group"><label class="form-label">Nama Belakang</label><input class="form-input" type="text" placeholder="Doe"></div>
+        <div class="form-group"><label class="form-label">Nama Depan</label><input class="form-input" type="text" id="user-first-name" placeholder="John"></div>
+        <div class="form-group"><label class="form-label">Nama Belakang</label><input class="form-input" type="text" id="user-last-name" placeholder="Doe"></div>
       </div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="user@example.com"></div>
-      <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input" type="tel" placeholder="+62 812 ..."></div>
-      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" placeholder="••••••••"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="user-email" placeholder="user@example.com"></div>
+      <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input" type="tel" id="user-phone" placeholder="+62 812 ..."></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="user-password" placeholder="••••••••"></div>
       <div class="form-group"><label class="form-label">Role</label>
         <div style="display:flex;gap:16px;margin-top:8px;">
           <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;"><input type="radio" name="user-role" value="user" checked style="accent-color:var(--red);"> User</label>
@@ -985,7 +1058,7 @@ function buildCrudForms(artists) {
         </div>
       </div>
       <div class="form-group"><label class="form-label">Status</label>
-        <select class="form-input"><option>Active</option><option>Inactive</option><option>Banned</option></select>
+        <select class="form-input" id="user-status"><option>Active</option><option>Inactive</option><option>Banned</option></select>
       </div>
       <button class="btn-submit" onclick="saveCrudForm('user')">SIMPAN USER</button>`,
     };
@@ -1063,16 +1136,42 @@ function saveCrudForm(type) {
         const isEdit = !!editId;
         saveKonserToAPI(isEdit, editId || null)
             .then(() => {
-                showToast("success", "Konser berhasil disimpan!");
+                showToast("success", "✓ Konser berhasil disimpan!");
                 setTimeout(() => buildConcertsTable(), 300);
             })
             .catch((error) => {
-                showToast("error", error.message || "Gagal menyimpan konser");
+                showToast("error", "✗ Gagal menyimpan konser: " + (error.message || "Kesalahan tidak diketahui"));
             });
+    } else if (type === "artist") {
+        const editId =
+            document.getElementById("crud-modal-body")?.dataset.editId;
+        const isEdit = !!editId;
+        saveArtistToAPI(isEdit, editId || null)
+            .then(() => {
+                showToast("success", "✓ Artis berhasil disimpan!");
+                setTimeout(() => buildArtistsTable(), 300);
+            })
+            .catch((error) => {
+                showToast("error", "✗ Gagal menyimpan artis: " + (error.message || "Kesalahan tidak diketahui"));
+            });
+    } else if (type === "ticket") {
+        const editId =
+            document.getElementById("crud-modal-body")?.dataset.editId;
+        const isEdit = !!editId;
+        saveTicketToAPI(isEdit, editId || null)
+            .then(() => {
+                showToast("success", "✓ Tiket berhasil disimpan!");
+                setTimeout(() => buildTicketsTable(), 300);
+            })
+            .catch((error) => {
+                showToast("error", "✗ Gagal menyimpan tiket: " + (error.message || "Kesalahan tidak diketahui"));
+            });
+    } else if (type === "user") {
+        showToast("info", "ℹ Manajemen user tersedia di halaman manajemen pengguna");
     } else {
         showToast(
             "success",
-            type.charAt(0).toUpperCase() +
+            "✓ " + type.charAt(0).toUpperCase() +
                 type.slice(1) +
                 " berhasil disimpan!",
         );
@@ -1194,7 +1293,7 @@ function selectPayment(input) {
 function submitOrder() {
     const tosCheckbox = document.getElementById("agree-tos");
     if (!tosCheckbox || !tosCheckbox.checked) {
-        showToast("error", "Harap setujui syarat & ketentuan");
+        showToast("error", "✗ Harap setujui syarat & ketentuan");
         return;
     }
 
@@ -1202,17 +1301,28 @@ function submitOrder() {
         'input[name="metode_pembayaran"]:checked',
     )?.value;
     if (!paymentMethod) {
-        showToast("error", "Pilih metode pembayaran");
+        showToast("error", "✗ Pilih metode pembayaran");
         return;
     }
 
     const checkoutForm = document.getElementById("checkout-form");
     if (!checkoutForm) {
-        showToast("error", "Form checkout tidak ditemukan");
+        showToast("error", "✗ Form checkout tidak ditemukan");
         return;
     }
 
-    checkoutForm.submit();
+    // Disable button and show processing notification
+    const submitBtn = event.target;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+    
+    showToast("info", "ℹ Memproses pembayaran Anda...");
+
+    // Submit the form
+    setTimeout(() => {
+        checkoutForm.submit();
+    }, 1000);
 }
 
 // ====== VIDEO MODAL ======
@@ -1244,6 +1354,82 @@ function toggleWishlist(el) {
         el.style.background = "rgba(0,0,0,0.5)";
         el.style.color = "var(--gray)";
     }
+}
+
+// ====== DELETE FORM HANDLERS ======
+function setupDeleteFormHandlers() {
+    // Setup delete form handlers for artists, tickets, users, etc.
+    document.addEventListener("submit", async function(e) {
+        const form = e.target;
+        
+        // Only handle forms with DELETE method
+        if (form.method.toUpperCase() !== "POST" || !form.querySelector('input[name="_method"][value="DELETE"]')) {
+            return;
+        }
+        
+        e.preventDefault();
+        
+        const action = form.action;
+        const entityType = detectEntityType(action);
+        const entityId = extractIdFromUrl(action);
+        
+        // Show confirmation
+        const entityName = detectEntityName(entityType, entityId);
+        if (!confirm(`Apakah kamu yakin ingin menghapus ${entityName}?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(action, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken(),
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Remove the row from table with animation
+            const row = form.closest("tr");
+            if (row) {
+                row.style.opacity = "0";
+                row.style.transition = "opacity 0.3s";
+                setTimeout(() => row.remove(), 300);
+            }
+            
+            // Show success notification
+            showToast("success", `✓ ${entityName} berhasil dihapus!`);
+        } catch (error) {
+            showToast("error", `✗ Gagal menghapus ${entityName}: ${error.message}`);
+        }
+    }, true); // Use capturing phase to intercept forms
+}
+
+function detectEntityType(url) {
+    if (url.includes("/api/artists/")) return "artis";
+    if (url.includes("/api/tickets/")) return "tiket";
+    if (url.includes("/api/users/")) return "user";
+    if (url.includes("/api/konsers/")) return "konser";
+    return "data";
+}
+
+function extractIdFromUrl(url) {
+    const parts = url.split("/");
+    return parts[parts.length - 1];
+}
+
+function detectEntityName(type, id) {
+    const names = {
+        artis: "artis",
+        tiket: "tiket",
+        user: "pengguna",
+        konser: "konser",
+        data: "data"
+    };
+    return names[type] || "data";
 }
 
 // ====== PROFILE TABS ======
@@ -1329,6 +1515,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderHomeConcerts();
     initParticles();
     initAOS();
+    setupDeleteFormHandlers();
     // Navbar search
     const navSearch = document.querySelector(".nav-search");
     if (navSearch) {

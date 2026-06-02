@@ -455,6 +455,9 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div class="toast" id="toast-container"></div>
+
     <script src="{{ asset('js/script.js') }}"></script>
 
 </body>

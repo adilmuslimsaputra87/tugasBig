@@ -8,28 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
-    <style>
-        body { background: var(--bg); color: var(--white); }
-        .admin-page { padding: 40px 5%; }
-        .admin-header { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
-        .admin-header a { color: var(--gray); text-decoration: none; font-size: 14px; }
-        .admin-header a:hover { color: var(--white); }
-        .admin-title { font-family: var(--font-head); font-size: 32px; letter-spacing: 2px; }
-        .form-container { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; max-width: 600px; }
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-size: 14px; margin-bottom: 8px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
-        .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; color: var(--white); font-size: 14px; }
-        .form-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(229,9,20,0.1); }
-        .form-textarea { resize: vertical; min-height: 100px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .btn-group { display: flex; gap: 12px; margin-top: 40px; }
-        .btn-submit { flex: 1; background: var(--red); color: white; border: none; padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-submit:hover { background: #c70810; }
-        .btn-back { flex: 1; background: var(--bg3); color: var(--gray); border: 1px solid var(--border); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-back:hover { background: var(--border); color: var(--white); }
-        .form-row-full { grid-column: 1 / -1; }
-        select.form-input { cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="/css/css1.css">
+    
 </head>
 <body>
     <div class="admin-page">

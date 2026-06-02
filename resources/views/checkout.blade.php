@@ -126,6 +126,10 @@
             </div>
         </div>
     </form>
+
+    <!-- Toast Notification Container -->
+    <div class="toast" id="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="js/script.js"></script>

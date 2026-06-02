@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Konser;
 use Illuminate\Http\Request;
+use App\Models\Artist;
 
 class KonserController extends Controller
 {
@@ -18,7 +19,8 @@ class KonserController extends Controller
 
     public function create()
     {
-        return view('admin.konsers.create');
+        $artists = Artist::all();
+        return view('admin.konsers.create', compact('artists'));
     }
 
     /**

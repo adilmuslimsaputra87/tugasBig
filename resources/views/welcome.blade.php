@@ -29,7 +29,6 @@
             <span class="nav-link" onclick="navigate('concerts')" id="nl-concerts">Concerts</span>
             <span class="nav-link" onclick="navigate('artists')" id="nl-artists">Artists</span>
             <span class="nav-link" onclick="navigate('gallery')" id="nl-gallery">Gallery</span>
-            <a class="nav-link" href="/admin" id="nl-admin" style="color:#E50914;">Admin</a>
         </div>
         <div class="nav-right">
             <div class="nav-search-wrap">
@@ -77,7 +76,7 @@
             <div class="hero-particles" id="hero-particles"></div>
             <div class="hero-grid"></div>
             <div class="hero-content">
-                <div class="hero-badge"><i class="fas fa-circle"></i> LIVE CONCERTS 2025</div>
+                <div class="hero-badge"><i class="fas fa-circle"></i> LIVE CONCERTS 2026</div>
                 <h1 class="hero-title">
                     EXPERIENCE<br>
                     <span class="line2">THE STAGE</span>
@@ -124,7 +123,7 @@
                 <p class="featured-desc">Konser spektakuler dari salah satu band terbesar dunia dengan visual show yang
                     luar biasa dan pengalaman live yang tak terlupakan.</p>
                 <div class="featured-meta">
-                    <div class="featured-meta-item"><i class="fas fa-calendar"></i> 15 Agustus 2025</div>
+                    <div class="featured-meta-item"><i class="fas fa-calendar"></i> 15 Agustus 2026</div>
                     <div class="featured-meta-item"><i class="fas fa-map-marker-alt"></i> GBK Jakarta</div>
                     <div class="featured-meta-item"><i class="fas fa-clock"></i> 19.00 WIB</div>
                 </div>
@@ -206,7 +205,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2025 PrimeStage. Hak cipta dilindungi.</span>
+                <span>© 2026 PrimeStage. Hak cipta dilindungi.</span>
                 <span>Made with <i class="fas fa-heart" style="color:var(--red);"></i> in Indonesia</span>
             </div>
         </footer>
@@ -387,7 +386,7 @@
                     <div>
                         <div class="history-title">Coldplay — Music of the Spheres</div>
                         <div class="history-meta"><i class="fas fa-calendar" style="margin-right:6px;"></i>15 Agustus
-                            2025 · GBK Jakarta</div>
+                            2026 · GBK Jakarta</div>
                         <div class="history-meta" style="margin-top:4px;"><i class="fas fa-ticket-alt"
                                 style="margin-right:6px;"></i>2x Festival — Rp 1.500.000/tiket</div>
                     </div>
@@ -402,7 +401,7 @@
                     <div>
                         <div class="history-title">NOAH — Dunia Batas World Tour</div>
                         <div class="history-meta"><i class="fas fa-calendar" style="margin-right:6px;"></i>20
-                            September 2025 · Trans Studio Bandung</div>
+                            September 2026 · Trans Studio Bandung</div>
                         <div class="history-meta" style="margin-top:4px;"><i class="fas fa-ticket-alt"
                                 style="margin-right:6px;"></i>1x VIP — Rp 500.000/tiket</div>
                     </div>

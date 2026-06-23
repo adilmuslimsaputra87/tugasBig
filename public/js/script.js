@@ -1229,38 +1229,78 @@ function buildAdminDashboard() {
 function buildConcertsTable() {
     const t = document.getElementById("admin-concerts-table");
     if (!t) return;
-    t.innerHTML =
-        '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+
+    // Perbaikan struktur: Bungkus dengan <tbody> agar layout tabel tidak rusak saat memuat data
+    t.innerHTML = '<tbody><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr></tbody>';
+
     loadKonsersFromAPI()
         .then((konsersData) => {
-            t.innerHTML = `<thead><tr><th>#</th><th>Poster</th><th>Konser</th><th>Artis</th><th>Tanggal</th><th>Kota</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead>
-      <tbody>${konsersData
-                    .map(
-                        (c, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td><img class="concert-thumb" src="/storage/${c.img}" alt=""></td>
-        <td><div class="td-name">${c.title}</div></td>
-        <td class="td-artist">${c.artist}</td>
-        <td style="font-size:13px;">${c.date}</td>
-        <td>${c.city}</td>
-        <td>Rp ${(c.price / 1000).toFixed(0)}rb</td>
-        <td><span class="status-badge ${c.status === "on-sale" ? "status-on-sale" : "status-sold-out"}">${c.status === "on-sale" ? "ON SALE" : "SOLD OUT"}</span></td>
-        <td><div class="td-actions">
-          <a class="btn-edit" href="/admin/konsers/${c.id}/edit"><i class="fas fa-edit"></i></a>
-          <button class="btn-del" onclick="deleteConcert(${c.id},this)"><i class="fas fa-trash"></i></button>
-        </div></td>
-      </tr>`,
-                    )
-                    .join("")}</tbody>`;
+            // Ambil domain utama secara dinamis (localhost atau domain production Render)
+            const baseUrl = window.location.origin;
+
+            const rows = konsersData.map((c, i) => {
+                // ==========================================
+                // FIX BUG GAMBAR: Deteksi tipe path gambar
+                // ==========================================
+                let imgSrc = c.img;
+
+                if (imgSrc && !imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
+                    // Antisipasi jika dari API sudah ada kata '/storage/' atau 'storage/'
+                    if (imgSrc.startsWith('/storage/')) {
+                        imgSrc = `${baseUrl}${imgSrc}`;
+                    } else if (imgSrc.startsWith('storage/')) {
+                        imgSrc = `${baseUrl}/${imgSrc}`;
+                    } else {
+                        imgSrc = `${baseUrl}/storage/${imgSrc}`;
+                    }
+                } else if (!imgSrc) {
+                    // Gambar cadangan jika datanya kosong/null
+                    imgSrc = `${baseUrl}/images/default-poster.png`;
+                }
+
+                return `
+                <tr>
+                  <td>${i + 1}</td>
+                  <td><img class="concert-thumb" src="${imgSrc}" alt="${c.title}" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;"></td>
+                  <td><div class="td-name">${c.title}</div></td>
+                  <td class="td-artist">${c.artist}</td>
+                  <td style="font-size:13px;">${c.date}</td>
+                  <td>${c.city}</td>
+                  <td>Rp ${(c.price / 1000).toFixed(0)}rb</td>
+                  <td><span class="status-badge ${c.status === "on-sale" ? "status-on-sale" : "status-sold-out"}">${c.status === "on-sale" ? "ON SALE" : "SOLD OUT"}</span></td>
+                  <td><div class="td-actions">
+                    <a class="btn-edit" href="/admin/konsers/${c.id}/edit"><i class="fas fa-edit"></i></a>
+                    <button class="btn-del" onclick="deleteConcert(${c.id},this)"><i class="fas fa-trash"></i></button>
+                  </div></td>
+                </tr>`;
+            }).join("");
+
+            // Pasang struktur tabel yang valid dan rapi
+            t.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Poster</th>
+                        <th>Konser</th>
+                        <th>Artis</th>
+                        <th>Tanggal</th>
+                        <th>Kota</th>
+                        <th>Harga</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            `;
         })
         .catch((error) => {
             const errorMsg = error.message || "";
             const message = errorMsg.includes("401") || errorMsg.includes("Unauthorized")
                 ? "Anda harus login terlebih dahulu untuk mengakses data konser"
                 : "Gagal memuat data konser";
-            t.innerHTML =
-                `<tr><td colspan="9" style="text-align:center;color:var(--gray);">${message}</td></tr>`;
+
+            // Perbaikan struktur: Bungkus error dengan <tbody>
+            t.innerHTML = `<tbody><tr><td colspan="9" style="text-align:center;color:var(--gray);">${message}</td></tr></tbody>`;
         });
 }
 
@@ -1357,49 +1397,76 @@ function buildMediaTable() {
     const t = document.getElementById("admin-media-table");
     if (!t) return;
 
-    t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+    // FIX 1: Bungkus tr dengan tbody agar struktur HTML valid saat memuat data
+    t.innerHTML = '<tbody><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr></tbody>';
 
     loadMediaFromAPI()
     .then((media) => {
-            console.log("Data media dari database:", media);
-            t.innerHTML = `
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Nama</th>
-                    <th>Gambar</th>
-                    <th>Location</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${media.map((m, index) => { // Ubah 'i' jadi 'index' biar gak bentrok
+        console.log("Data media dari database:", media);
 
-                    // 1. Logika pengecekan gambaFr dimasukkan ke sini bray
-                    const gambarTag = (m.image && m.image !== "undefined" && m.image !== "")
-                        ? `<img src="${m.image}" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`
-                        : `<img src="/storage/img/artists.jpg" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`;
+        // Ambil domain utama secara dinamis (localhost atau domain Render)
+        const baseUrl = window.location.origin;
 
-                    // 2. WAJIB pakai kata 'return' kalau ada proses logic di atasnya
-                    return `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><div class="td-name">${m.name}</div></td>
-                        <td>${gambarTag}</td> <td style="font-size:13px;color:var(--gray);">${m.location || '-'}</td>
-                        <td>
-                            <div class="td-actions">
-                                <button class="btn-edit" onclick="showToast('info','Edit media ${m.name}')"><i class="fas fa-edit"></i></button>
-                                <button class="btn-del" onclick="deleteMedia(${m.id}, this)"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-                }).join("")}
-            </tbody>`;
-        })
-        .catch((error) => {
-            console.error("Error media table:", error);
-            t.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;padding:30px;">Gagal memuat data media</td></tr>';
-        });
+        const rows = media.map((m, index) => {
+            let finalImgUrl = "";
+
+            // FIX 2: Validasi berlapis untuk mendeteksi link luar vs file lokal vs data kosong/undefined
+            if (m.image && m.image !== "undefined" && m.image.trim() !== "") {
+                if (m.image.startsWith('http://') || m.image.startsWith('https://')) {
+                    // Jika data dari database sudah berupa link internet langsung
+                    finalImgUrl = m.image;
+                } else {
+                    // Jika data berupa path file lokal, rapihin prefix /storage/-nya
+                    if (m.image.startsWith('/storage/')) {
+                        finalImgUrl = `${baseUrl}${m.image}`;
+                    } else if (m.image.startsWith('storage/')) {
+                        finalImgUrl = `${baseUrl}/${m.image}`;
+                    } else {
+                        finalImgUrl = `${baseUrl}/storage/${m.image}`;
+                    }
+                }
+            } else {
+                // Fallback default image menggunakan domain absolut agar tidak nyasar di sub-url
+                finalImgUrl = `${baseUrl}/storage/img/artists.jpg`;
+            }
+
+            const gambarTag = `<img src="${finalImgUrl}" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`;
+
+            return `
+            <tr>
+                <td>${index + 1}</td>
+                <td><div class="td-name">${m.name}</div></td>
+                <td>${gambarTag}</td>
+                <td style="font-size:13px;color:var(--gray);">${m.location || '-'}</td>
+                <td>
+                    <div class="td-actions">
+                        <button class="btn-edit" onclick="showToast('info','Edit media ${m.name}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-del" onclick="deleteMedia(${m.id}, this)"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join("");
+
+        // Terapkan struktur tabel final yang kokoh
+        t.innerHTML = `
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nama</th>
+                <th>Gambar</th>
+                <th>Location</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rows}
+        </tbody>`;
+    })
+    .catch((error) => {
+        console.error("Error media table:", error);
+        // FIX 3: Pasang pembungkus tbody untuk penanganan error layout tabel
+        t.innerHTML = '<tbody><tr><td colspan="5" style="text-align:center;color:red;padding:30px;">Gagal memuat data media</td></tr></tbody>';
+    });
 }
 
 function deleteConcert(id, btn) {

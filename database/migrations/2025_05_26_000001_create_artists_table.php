@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->longText('bio')->nullable();
             $table->string('instagram')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

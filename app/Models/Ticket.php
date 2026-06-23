@@ -36,7 +36,7 @@ class Ticket extends Model
 
     public function transactions()
 {
-    return $this->hasMany(Transaction::class, 'tickets_id');
+    return $this->hasMany(Transaksi::class, 'tickets_id');
 }
 
 }

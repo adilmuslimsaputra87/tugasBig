@@ -17,7 +17,7 @@
             <h1 class="admin-title">EDIT TIKET</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('tickets.update', $ticket->id) }}">
+        <form class="form-container" method="POST" action="{{ route('admin.tickets.update', $ticket->id) }}">
             @csrf
             @method('PUT')
 
@@ -27,7 +27,7 @@
                     <option value="">Pilih Konser</option>
                     @foreach($konsers as $konser)
                         <option value="{{ $konser->id }}" {{ old('konser_id', $ticket->konser_id) == $konser->id ? 'selected' : '' }}>
-                            {{ $konser->artist }} — {{ $konser->title }}
+                            {{ $konser->artist?->name ?? 'N/A' }} — {{ $konser->title }}
                         </option>
                     @endforeach
                 </select>
@@ -43,7 +43,8 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Harga (Rp)</label>
-                    <input type="number" name="price" class="form-input" placeholder="750000" value="{{ old('price', $ticket->price) }}" min="0" required>
+                    <input type="text" name="price" id="price" class="form-input" placeholder="750000"
+                           value="{{ old('price', $ticket->price) ? number_format(old('price', $ticket->price), 0, ',', '.') : '' }}" required oninput="formatRupiah(this)">
                     @error('price') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
                 </div>
 
@@ -63,7 +64,8 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Harga Promo (Rp)</label>
-                    <input type="number" name="promo_price" class="form-input" placeholder="600000" value="{{ old('promo_price', $ticket->promo_price) }}" min="0">
+                    <input type="text" name="promo_price" id="promo_price" class="form-input" placeholder="600000"
+                           value="{{ old('promo_price', $ticket->promo_price) ? number_format(old('promo_price', $ticket->promo_price), 0, ',', '.') : '' }}" oninput="formatRupiah(this)">
                     @error('promo_price') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
                 </div>
 
@@ -81,11 +83,38 @@
             </div>
 
             <div class="btn-group">
-                <button type="submit" class="btn-submit text-dark"><i class="fas fa-save"></i>&nbsp; SIMPAN
-                    KONSER</button>
+                <button type="submit" id="submitBtn" class="btn-submit text-dark"><i class="fas fa-save"></i>&nbsp; SIMPAN TIKET</button>
                 <a href="/admin" class="btn-back"><i class="fas fa-times"></i>&nbsp; BATAL</a>
             </div>
         </form>
     </div>
-</body>
-</html>
+
+    <script>
+        // Fungsi untuk membuat format otomatis titik ribuan saat diketik
+        function formatRupiah(element) {
+            let value = element.value.replace(/[^,\d]/g, '').toString();
+            let split = value.split(',');
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+
+            element.value = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        }
+
+        // Membersihkan titik (.) sebelum data dikirim ke Controller Laravel
+        document.querySelector('form').addEventListener('submit', function() {
+            let priceInput = document.getElementById('price');
+            let promoPriceInput = document.getElementById('promo_price');
+
+            // Hapus semua titik agar dibaca angka murni oleh Laravel
+            priceInput.value = priceInput.value.replace(/\./g, '');
+            if(promoPriceInput.value) {
+                promoPriceInput.value = promoPriceInput.value.replace(/\./g, '');
+            }
+        });
+    </script>

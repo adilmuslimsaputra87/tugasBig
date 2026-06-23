@@ -9,18 +9,7 @@ let selectedTicketId = null;
 
 // Gallery images (global)
 const galleryImgs = [
-    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80",
-    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80",
-    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=80",
-    "https://images.unsplash.com/photo-1501612780327-45045538702b?w=400&q=80",
-    "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&q=80",
-    "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&q=80",
-    "https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&q=80",
-    "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80",
-    "https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=400&q=80",
-    "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&q=80",
-    "https://images.unsplash.com/photo-1545128485-c400ce7b17eb?w=400&q=80",
-    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80",
+    "storage/",
 ];
 
 // In-memory cache agar tidak fetch ulang terus-menerus
@@ -53,6 +42,145 @@ async function apiFetch(url, options = {}) {
     return response.json();
 }
 
+// ====== AUTH ======
+function openModal(type) {
+    if (type === "login" || type === "register") {
+        document.getElementById("modal-auth").classList.add("show");
+        switchAuthTab(type);
+    } else if (type === "editProfile") {
+        showToast("info", "Edit profil tersedia di tab Pengaturan Akun");
+    } else if (type === "transaction") {
+        document.getElementById("modal-transaction").classList.add("show");
+    }
+}
+
+function closeModal(type) {
+    if (type === "transaction")
+        document.getElementById("modal-transaction").classList.remove("show");
+    if (type === "auth")
+        document.getElementById("modal-auth").classList.remove("show");
+    if (type === "crud")
+        document.getElementById("modal-crud").classList.remove("show");
+    if (type === "video") {
+        document.getElementById("modal-video").classList.remove("show");
+        document.getElementById("yt-iframe").src = "";
+    }
+}
+
+function switchAuthTab(tab) {
+    document
+        .getElementById("tab-login")
+        .classList.toggle("active", tab === "login");
+    document
+        .getElementById("tab-register")
+        .classList.toggle("active", tab === "register");
+    document.getElementById("auth-login-form").style.display =
+        tab === "login" ? "block" : "none";
+    document.getElementById("auth-register-form").style.display =
+        tab === "register" ? "block" : "none";
+}
+
+function loginUser() {
+    const email = document.getElementById("login-email").value;
+    const pass = document.getElementById("login-password").value;
+    if (!email || !pass) {
+        showToast("error", "Email dan password harus diisi");
+        return;
+    }
+
+    loginUserWithAPI(email, pass)
+        .then((data) => {
+            const user = data.user || data;
+            currentUser = {
+                name: user.name || email.split("@")[0],
+                email: user.email || email,
+                avatar: (user.name || email).charAt(0).toUpperCase(),
+            };
+            document.getElementById("nav-auth-btns").style.display = "none";
+            document.getElementById("nav-user").style.display = "block";
+            document.getElementById("nav-avatar-initial").textContent =
+                currentUser.avatar;
+            closeModal("auth");
+            showToast("success", "Selamat datang, " + currentUser.name + "!");
+        })
+        .catch((error) => {
+            showToast("error", error.message || "Email atau password salah");
+        });
+}
+
+function loginDemo() {
+    document.getElementById("login-email").value = "adil@uhamka.ac.id";
+    document.getElementById("login-password").value = "primestage123";
+    loginUser();
+}
+
+function registerUserWithAPI(data) {
+    return axios.post('/api/register', data)
+        .then(response => response.data)
+        .catch(error => {
+            const errors = error.response?.data?.errors;
+
+        if (errors) {
+            const firstError = Object.values(errors)[0][0];
+            throw new Error(firstError);
+        }
+
+        throw new Error(
+            error.response?.data?.message || 'Gagal membuat akun'
+        );
+    });
+}
+
+async function registerUser(e) {
+    if (e) e.preventDefault();
+
+    const email = document.getElementById("reg-email").value;
+    const first = document.getElementById("reg-firstname").value;
+    const last = document.getElementById("reg-lastname").value;
+    const phone = document.getElementById("reg-phone").value;
+    const pass = document.getElementById("reg-password").value;
+    const confirmPass = document.getElementById("reg-confirm-password").value;
+
+    if (!email || !pass || !first || !last || !phone || !confirmPass) {
+        showToast("error", "Harap isi semua field yang diperlukan");
+        return;
+    }
+
+    if (pass !== confirmPass) {
+        showToast("error", "Password dan konfirmasi password tidak cocok");
+        return;
+    }
+
+    try {
+        const result = await registerUserWithAPI({
+            email: email,
+            password: pass,
+            first_name: first,
+            last_name: last,
+            phone: phone,
+        });
+
+        showToast("success", result.message || "Registrasi berhasil");
+        openModal("login");
+
+    } catch (error) {
+        showToast("error", error.message);
+    }
+}
+
+function logout() {
+    axios
+        .post("/logout")
+        .then(() => {
+            window.location.href = "/dashboard";
+            showToast("success", "Berhasil logout");
+        })
+        .catch((error) => {
+            console.error("Logout Gagal = ", error);
+            showToast("error", "Gagal logout, Silahkan Refresh Halaman");
+        });
+}
+
 // ====== API: KONSERS ======
 async function loadKonsersFromAPI() {
     try {
@@ -61,7 +189,7 @@ async function loadKonsersFromAPI() {
         _concertsCache = data.map((k) => ({
             id: k.id,
             title: k.title,
-            artist: k.artist,
+            artist: k.artist ? k.artist.name || "Unknown Artist" : "Unknown Artist",
             genre: k.genre || "Pop",
             city: k.city,
             venue: k.venue,
@@ -74,22 +202,30 @@ async function loadKonsersFromAPI() {
             img:
                 k.image ||
                 "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
+            trailer:
+                k.trailer ||
+                "tidak ada vid",
             price: parseInt(k.price) || 0,
             type: k.type || "lokal",
             status:
                 k.status === "published"
                     ? "on-sale"
                     : k.status === "sold_out"
-                      ? "sold-out"
-                      : k.status || "on-sale",
+                        ? "sold-out"
+                        : k.status || "on-sale",
             desc: k.description || "",
-            trailerYt: k.trailer_yt || "dQw4w9WgXcQ",
             bg: k.type === "internasional" ? "internasional" : "indonesia",
         }));
         return _concertsCache;
     } catch (error) {
         console.error("Error loading konsers:", error);
-        showToast("error", "Gagal memuat data konser");
+        // Check if error is due to authentication
+        const errorMsg = error.message || "";
+        if (errorMsg.includes("401") || errorMsg.includes("Unauthorized")) {
+            showToast("warning", "Anda harus login terlebih dahulu untuk mengakses data konser");
+        } else {
+            showToast("error", "Gagal memuat data konser");
+        }
         return [];
     }
 }
@@ -131,6 +267,34 @@ async function saveKonserToAPI(isEdit = false, konserID = null) {
     return result;
 }
 
+async function deleteArtistsFromAPI(konserID) {
+    const result = await apiFetch(`/api/artists/${konserID}`, {
+        method: "DELETE",
+    });
+    _artistsCache = null;
+    return result;
+}
+async function deleteTicketFromAPI(konserID) {
+    const result = await apiFetch(`/api/tickets/${konserID}`, {
+        method: "DELETE",
+    });
+    _ticketCategoriesCache = null;
+    return result;
+}
+async function deleteUsersFromAPI(konserID) {
+    const result = await apiFetch(`/api/users/${konserID}`, {
+        method: "DELETE",
+    });
+    _usersCache = null;
+    return result;
+}
+async function deleteMediaFromAPI(konserID) {
+    const result = await apiFetch(`/api/media/${konserID}`, {
+        method: "DELETE",
+    });
+    _mediaCache = null;
+    return result;
+}
 async function deleteKonserFromAPI(konserID) {
     const result = await apiFetch(`/api/konsers/${konserID}`, {
         method: "DELETE",
@@ -148,7 +312,7 @@ async function saveArtistToAPI(isEdit = false, artistID = null) {
         bio: document.getElementById("artist-bio")?.value || "",
         instagram: document.getElementById("artist-instagram")?.value || "",
     };
-    
+
     const method = isEdit ? "PUT" : "POST";
     const url = isEdit ? `/api/artists/${artistID}` : "/api/artists";
     const result = await apiFetch(url, {
@@ -176,7 +340,7 @@ async function saveTicketToAPI(isEdit = false, ticketID = null) {
         stock: document.getElementById("ticket-stock")?.value || 0,
         description: document.getElementById("ticket-desc")?.value || "",
     };
-    
+
     const method = isEdit ? "PUT" : "POST";
     const url = isEdit ? `/api/tickets/${ticketID}` : "/api/tickets";
     const result = await apiFetch(url, {
@@ -273,20 +437,36 @@ async function loadUsersFromAPI() {
     }
 }
 
+// ====== API: Media  ======
+async function loadMediaFromAPI() {
+    try {
+        const data = await apiFetch("/api/media");
+        return data.map((m) => ({
+            id: m.id,
+            name: m.name,
+            image: m.image,
+            location: m.location || null,
+        }));
+    } catch (error) {
+        console.error("Error loading media:", error);
+        return [];
+    }
+}
+
 // ====== API: TRANSACTIONS ======
 async function loadTransactionsFromAPI() {
     try {
         const data = await apiFetch("/api/transactions");
-        return data.map((t) => ({
+        // Handle both array and object response
+        const transactions = Array.isArray(data) ? data : (data.data || []);
+
+        return transactions.map((t) => ({
             id: t.id,
-            user: t.user?.name || t.user_name || "-",
-            concert:
-                t.concert?.artist + " — " + t.concert?.title ||
-                t.concert_title ||
-                "-",
-            qty: t.qty || t.quantity || 1,
-            total: parseInt(t.total) || 0,
-            status: t.status || "pending",
+            user: (t.first_name || '') + ' ' + (t.last_name || ''),
+            concert: t.ticket?.konser?.title || t.ticket?.konser?.artist || 'Unknown',
+            qty: t.quantity || 1,
+            total: parseInt(t.total_price) || 0,
+            status: t.payment_status || 'pending',
             date: new Date(t.created_at || t.date).toLocaleDateString("id-ID", {
                 day: "2-digit",
                 month: "short",
@@ -299,6 +479,125 @@ async function loadTransactionsFromAPI() {
     }
 }
 
+/**
+ * Show transaction details modal
+ */
+
+
+/**
+ * Approve/Update transaction status
+ */
+async function approveTransaction(txId) {
+    try {
+        if (!confirm('Apakah Anda yakin ingin mengubah status transaksi menjadi CONFIRMED?')) {
+            return;
+        }
+
+        const result = await apiFetch(`/api/transactions/${txId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ payment_status: 'confirmed' })
+        });
+
+        showToast('success', '✓ Status transaksi berhasil diperbarui menjadi CONFIRMED');
+
+        // Reload transactions table
+        setTimeout(() => {
+            const tx = document.getElementById("recent-tx-table");
+            if (tx) {
+                tx.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+                loadTransactionsFromAPI().then((transactions) => {
+                    tx.innerHTML = renderTransactionsTable(transactions);
+                    attachTransactionEventListeners();
+                });
+            }
+        }, 500);
+    } catch (error) {
+        showToast('error', '✗ Gagal mengupdate status transaksi: ' + error.message);
+        console.error('Error in approveTransaction:', error);
+    }
+}
+
+/**
+ * Attach event listeners to transaction buttons
+ */
+function attachTransactionEventListeners() {
+    // Attach view button listeners (API-loaded transactions)
+    const viewButtons = document.querySelectorAll('[data-action="view-transaction"]');
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const txId = this.getAttribute('data-tx-id');
+            console.log('View transaction (API):', txId);
+            showTransactionDetail(txId);
+        });
+    });
+
+    // Attach approve button listeners (API-loaded transactions)
+    const approveButtons = document.querySelectorAll('[data-action="approve-transaction"]');
+    approveButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const txId = this.getAttribute('data-tx-id');
+            console.log('Approve transaction (API):', txId);
+            approveTransaction(txId);
+        });
+    });
+
+    // Attach event listeners to Blade-rendered transaction table buttons
+    const adminTxTable = document.getElementById('admin-transactions-table');
+    if (adminTxTable) {
+        const rows = adminTxTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const txId = row.querySelector('td code') ? row.querySelector('td code').textContent : null;
+            const viewBtn = row.querySelector('.btn-view');
+            const editBtn = row.querySelector('.btn-edit');
+
+            if (viewBtn && txId) {
+                viewBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('View transaction (Blade):', txId);
+                });
+            }
+
+            if (editBtn && txId) {
+                editBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Approve transaction (Blade):', txId);
+                });
+            }
+        });
+    }
+}
+
+/**
+ * Render transactions table HTML
+ */
+function renderTransactionsTable(transactions) {
+    return `<thead><tr><th>ID</th><th>User</th><th>Konser</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+    <tbody>${transactions
+        .slice(0, 5)
+        .map((t) => `
+    <tr>
+        <td><code style="color:var(--red);font-size:12px;">${t.id}</code></td>
+        <td>${t.user}</td>
+        <td style="color:var(--gray);font-size:13px;">${t.concert}</td>
+        <td><strong>Rp ${t.total.toLocaleString("id-ID")}</strong></td>
+        <td><span class="status-badge ${t.status.toLowerCase() === 'confirmed' ? 'status-confirmed' : 'status-pending'}">${t.status.toUpperCase()}</span></td>
+        <td>
+            <div class="td-actions">
+                <button class="btn-view" data-action="view-transaction" data-tx-id="${t.id}" title="Lihat Detail" style="cursor: pointer; border: none; background: #3b82f6; color: white; padding: 5px 8px; border-radius: 4px;">
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${t.status === 'pending' ? `<button class="btn-approve" data-action="approve-transaction" data-tx-id="${t.id}" title="Approve" style="cursor: pointer; border: none; background: #22c55e; color: white; padding: 5px 8px; border-radius: 4px; margin-left: 5px;">
+                    <i class="fas fa-check"></i>
+                </button>` : ''}`,
+        )
+    }</tbody>`;
+}
 // ====== API: AUTH ======
 async function loginUserWithAPI(email, password) {
     return apiFetch("/api/login", {
@@ -337,11 +636,25 @@ function navigate(page) {
 
 // ====== RENDER CONCERTS ======
 function concertCardHTML(c, i) {
+    const isLoggedIn = document.body.getAttribute("data-user-logged-in") === "true";
     const badge =
         c.status === "sold-out"
             ? '<span class="concert-card-badge sold-out">SOLD OUT</span>'
             : '<span class="concert-card-badge">ON SALE</span>';
-    return `<div class="concert-card" onclick="openConcertDetail(${c.id})" data-artist="${c.artist.toLowerCase()}" data-genre="${c.genre.toLowerCase()}" data-city="${c.city.toLowerCase()}" data-type="${c.type}" data-price="${c.price}" data-aos style="animation-delay:${i * 0.08}s">
+    const buttonText = isLoggedIn
+        ? (c.status === "sold-out" ? "HABIS" : "BELI")
+        : "LOGIN";
+    const buttonClass = isLoggedIn
+        ? (c.status === "sold-out" ? "disabled" : "")
+        : "";
+
+    return `<div class="concert-card" onclick="openConcertDetail(${c.id})"
+    data-genre="${(c.tittle || '').toLowerCase()}"
+    data-artist="${(c.artist || '').toLowerCase()}"
+    data-city="${(c.city || '').toLowerCase()}"
+    data-type="${c.type || ''}"
+    data-price="${c.price || 0}"
+    data-aos style="animation-delay:${i * 0.08}s">
     <div class="concert-card-img">
       <img src="/storage/${c.img}" alt="${c.artist}" loading="lazy">
       <div class="concert-card-overlay"></div>
@@ -361,7 +674,7 @@ function concertCardHTML(c, i) {
           <div class="concert-price-label">Mulai dari</div>
           <div class="concert-price">Rp <span>${(c.price / 1000).toFixed(0)}</span>.000</div>
         </div>
-        <button class="btn-book ${c.status === "sold-out" ? "disabled" : ""}">${c.status === "sold-out" ? "HABIS" : "BELI"}</button>
+        <button class="btn-book ${buttonClass}">${buttonText}</button>
       </div>
     </div>
   </div>`;
@@ -465,7 +778,7 @@ function filterConcerts(typeFilter) {
         let filtered = allConcerts.filter((c) => {
             const matchSearch =
                 !search ||
-                c.artist.toLowerCase().includes(search.toLowerCase()) ||
+                c.artist.toLowerCase().includes(search.toUpperCase()) ||
                 c.title.toLowerCase().includes(search.toLowerCase());
             const matchGenre =
                 !genre || c.genre.toLowerCase().includes(genre.toLowerCase());
@@ -492,82 +805,87 @@ function filterConcerts(typeFilter) {
 
 // ====== CONCERT DETAIL ======
 function openConcertDetail(id) {
+    const isLoggedIn = document.body.getAttribute("data-user-logged-in") === "true";
+
+    // 1. Cek apakah user sudah login sebelum membuka detail konser
+    if (!isLoggedIn) {
+        showToast('info', '🔐 Anda harus login terlebih dahulu untuk melihat detail dan membeli tiket konser.');
+        setTimeout(() => {
+            openModal('login');
+        }, 500);
+        return;
+    }
+
+    // 2. Set state ID konser terpilih dan arahkan navigasi
     selectedConcertId = id;
     navigate("detail");
     document.getElementById("nl-concerts").classList.add("active");
 
+    // 3. Ambil data konser berdasarkan ID dari API
     getKonserById(id).then((c) => {
         if (!c) {
             showToast("error", "Konser tidak ditemukan");
             return;
         }
 
+        // Konten utama detail konser
         document.getElementById("detail-bg-img").src = "/storage/" + c.img;
-        document.getElementById("detail-badge").textContent =
-            c.genre.toUpperCase();
+        document.getElementById("detail-badge").textContent = c.genre.toUpperCase();
         document.getElementById("detail-title").textContent = c.title;
-        document
-            .getElementById("detail-artist")
-            .querySelector("span").textContent = c.artist;
+        document.getElementById("detail-artist").querySelector("span").textContent = c.artist;
         document.getElementById("detail-date").textContent = c.date;
         document.getElementById("detail-venue").textContent = c.venue;
         document.getElementById("detail-time").textContent = c.time;
         document.getElementById("detail-description").textContent = c.desc;
 
-        document.getElementById("detail-lineup").innerHTML = [
-            c.artist,
-            "Special Guest",
-            "Opening Act 1",
-            "Opening Act 2",
-        ]
-            .map(
-                (name, i) => `
-      <div class="lineup-item">
-        <div class="lineup-num">0${i + 1}</div>
-        <div class="lineup-info"><h4>${name}</h4><p>${i === 0 ? "Headliner" : "Supporting Artist"}</p></div>
-        ${i === 0 ? '<span class="status-badge status-on-sale">HEADLINER</span>' : ""}
-      </div>`,
+        // Render komponen lineup musisi
+        document.getElementById("detail-lineup").innerHTML = [c.artist]
+            .map((name, i) => `
+                <div class="lineup-item">
+                    <div class="lineup-num">0${i + 1}</div>
+                    <div class="lineup-info">
+                        <h4>${name}</h4>
+                        <p>${i === 0 ? "Headliner" : "Supporting Artist"}</p>
+                    </div>
+                    ${i === 0 ? '<span class="status-badge status-on-sale">HEADLINER</span>' : ""}
+                </div>`
             )
             .join("");
 
-        document.getElementById("detail-gallery").innerHTML = galleryImgs
-            .map(
-                (g) =>
-                    `<div class="gallery-img"><img src="${g}" alt="gallery" loading="lazy"></div>`,
-            )
-            .join("");
-        document.getElementById("detail-trailer-thumb").src =
-            "/storage/" + c.img;
-        document.getElementById("detail-trailer-title").textContent =
-            c.artist + " — Official Trailer";
+        // Konten media trailer di halaman detail
+        document.getElementById("detail-gallery-img").src = "/storage/" + c.img;
+        document.getElementById("detail-trailer").src = "/storage/" + c.trailer;
+        document.getElementById("video-source").src = "/storage/" + c.trailer;
+        document.getElementById("detail-trailer-title").textContent = c.artist + " — Official Trailer";
 
-        // Load ticket categories dari API
+        // 4. Load kategori tiket dari API secara dinamis
         const cats = document.getElementById("ticket-categories");
-        cats.innerHTML =
-            '<div style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i></div>';
+        cats.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i></div>';
+
         loadTicketCategoriesFromAPI(id).then((ticketCategories) => {
             if (!ticketCategories.length) {
-                cats.innerHTML =
-                    '<div style="text-align:center;padding:20px;color:var(--gray);">Belum ada kategori tiket</div>';
+                cats.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray);">Belum ada kategori tiket</div>';
                 return;
             }
+
             cats.innerHTML = ticketCategories
-                .map(
-                    (t) => `
-        <div class="ticket-category" onclick="selectTicketCat(this,'${t.id}','${t.name}',${t.price})">
-          <div>
-            <div class="ticket-cat-name">${t.name}</div>
-            <div class="ticket-cat-stock" style="font-size:11px;color:var(--gray);">${t.stock} sisa</div>
-          </div>
-          <div class="ticket-cat-price">Rp ${(t.price / 1000).toFixed(0)}K</div>
-        </div>`,
+                .map((t) => `
+                    <div class="ticket-category" onclick="selectTicketCat(this,'${t.id}','${t.name}',${t.price})">
+                        <div>
+                            <div class="ticket-cat-name">${t.name}</div>
+                            <div class="ticket-cat-stock" style="font-size:11px;color:var(--gray);">${t.stock} sisa</div>
+                        </div>
+                        <div class="ticket-cat-price">Rp ${(t.price / 1000).toFixed(0)}K</div>
+                    </div>`
                 )
                 .join("");
+
+            // Pilih kategori pertama secara default dan render peta kursi
             selectTicketCat(
                 cats.firstElementChild,
                 ticketCategories[0].id,
                 ticketCategories[0].name,
-                ticketCategories[0].price,
+                ticketCategories[0].price
             );
             renderSeatMap();
         });
@@ -630,6 +948,21 @@ function getCheckoutDataFromURL() {
 function goCheckout() {
     const isLoggedIn =
         document.body.getAttribute("data-user-logged-in") === "true";
+
+    // Cek apakah user sudah login
+    if (!isLoggedIn) {
+        showToast('info', '🔐 Anda harus login terlebih dahulu untuk membeli tiket. Silakan login atau buat akun baru.');
+        setTimeout(() => {
+            openModal('login');
+        }, 500);
+        return;
+    }
+
+    if(!selectedTicketId) {
+        showToast('warning', '⚠️ Silakan pilih kategori tiket terlebih dahulu sebelum melanjutkan ke checkout.');
+        return;
+    }
+
     getKonserById(selectedConcertId).then((c) => {
         if (!c) return;
 
@@ -717,7 +1050,7 @@ function setArtistFilter(val, btn) {
         <div class="artist-full-name">${a.name}</div>
         <div class="artist-full-genre">${a.genre}</div>
         <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
-        <button class="btn-book" style="margin-top:12px;">Lihat Konser</button>
+        <button class="btn-book" style="margin-top:12px;" onclick="event.stopPropagation();navigate('concerts')">Lihat Konser</button>
       </div>`,
             )
             .join("");
@@ -725,18 +1058,39 @@ function setArtistFilter(val, btn) {
 }
 
 // ====== GALLERY PAGE ======
-function renderGallery() {
+async function renderGallery() {
     const g = document.getElementById("gallery-grid");
-    if (g)
-        g.innerHTML = galleryImgs
+    if (!g) return;
+
+    // 1. Tampilkan loading spinner dulu di awal
+    g.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--gray);">
+            <i class="fas fa-spinner fa-spin" style="font-size:24px;"></i> Memuat data...
+        </div>`;
+
+    try {
+        // 2. Tunggu sampai data konser berhasil diambil dari API
+        const konsers = await loadKonsersFromAPI();
+
+        // 3. Map langsung dari array konsers (tidak perlu di-map dua kali)
+        g.innerHTML = konsers
             .map(
-                (img) => `
-    <div style="break-inside:avoid;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:var(--transition);"
-         onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-      <img src="${img}" style="width:100%;display:block;" loading="lazy">
-    </div>`,
+                (k) => `
+        <div data-id="${k.id}" style="break-inside:avoid;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:var(--transition);"
+             onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+          <img src="/storage/${k.img}" style="width:100%;display:block;" loading="lazy">
+        </div>`
             )
             .join("");
+
+    } catch (error) {
+        console.error("Gagal memuat galeri:", error);
+        // 4. Jika error, tampilkan pesan gagal, bukan spinner loading
+        g.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:60px;color:red;">
+                Gagal memuat data konser. Silakan coba lagi nanti.
+            </div>`;
+    }
 }
 
 // ====== ADMIN ======
@@ -759,6 +1113,7 @@ function switchAdmin(section) {
         "tickets",
         "transactions",
         "users",
+        "media",
     ].forEach((s) => {
         const el = document.getElementById("admin-section-" + s);
         const nav = document.getElementById("adm-" + s);
@@ -768,9 +1123,8 @@ function switchAdmin(section) {
     if (section === "admin") buildAdminDashboard();
     if (section === "concerts") buildConcertsTable();
     if (section === "artists") buildArtistsTable();
-    if (section === "tickets") buildTicketsTable();
-    if (section === "transactions") buildTransactionsTable();
     if (section === "users") buildUsersTable();
+    if (section === "media") buildMediaTable();
 }
 
 function buildAdminDashboard() {
@@ -812,20 +1166,62 @@ function buildAdminDashboard() {
         tx.innerHTML =
             '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i></td></tr>';
         loadTransactionsFromAPI().then((transactions) => {
-            tx.innerHTML = `<thead><tr><th>ID</th><th>User</th><th>Konser</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody>${transactions
-            .slice(0, 5)
-            .map(
-                (t) => `
-        <tr><td><code style="color:var(--red);font-size:12px;">${t.id}</code></td>
-        <td>${t.user}</td>
-        <td style="color:var(--gray);font-size:13px;">${t.concert}</td>
-        <td><strong>Rp ${t.total.toLocaleString("id-ID")}</strong></td>
-        <td><span class="status-badge status-${t.status}">${t.status.toUpperCase()}</span></td>
-        <td><div class="td-actions"><button class="btn-view" onclick="showToast('info','Detail transaksi ${t.id}')"><i class="fas fa-eye"></i></button></div></td>
+            tx.innerHTML = renderTransactionsTable(transactions);
+            // Attach event listeners to buttons
+            attachTransactionEventListeners();
+        }).catch(error => {
+            console.error('Error loading transactions:', error);
+            tx.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Gagal memuat transaksi</td></tr>';
+        });
+    }
+
+    // Load Recent Concerts for Dashboard
+    const dashboardConcerts = document.getElementById("dashboard-concerts-table");
+    if (dashboardConcerts) {
+        dashboardConcerts.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+        loadKonsersFromAPI().then((konsersData) => {
+            dashboardConcerts.innerHTML = `<thead><tr><th>#</th><th>Poster</th><th>Konser</th><th>Artis</th><th>Tanggal</th><th>Kota</th><th>Harga</th><th>Status</th></tr></thead>
+        <tbody>${konsersData
+                    .slice(0, 5)
+                    .map(
+                        (c, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td><img class="concert-thumb" src="/storage/${c.img}" alt="" style="width:40px;height:40px;object-fit:cover;"></td>
+            <td><div class="td-name">${c.title}</div></td>
+            <td class="td-artist">${c.artist}</td>
+            <td style="font-size:13px;">${c.date}</td>
+            <td>${c.city}</td>
+            <td>Rp ${(c.price / 1000).toFixed(0)}K</td>
+            <td><span class="status-badge ${c.status === "on-sale" ? "status-on-sale" : "status-sold-out"}">${c.status === "on-sale" ? "ON SALE" : "SOLD OUT"}</span></td>
         </tr>`,
-            )
-            .join("")}</tbody>`;
+                    )
+                    .join("")}</tbody>`;
+        }).catch(() => {
+            dashboardConcerts.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray);">Gagal memuat data konser</td></tr>';
+        });
+    }
+
+    // Load Popular Artists for Dashboard
+    const dashboardArtists = document.getElementById("dashboard-artists-table");
+    if (dashboardArtists) {
+        dashboardArtists.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+        loadArtistsFromAPI().then((artistsData) => {
+            dashboardArtists.innerHTML = `<thead><tr><th>#</th><th>Foto</th><th>Nama</th><th>Genre</th></tr></thead>
+        <tbody>${artistsData
+                    .slice(0, 5)
+                    .map(
+                        (a, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td><img class="concert-thumb" src="/storage/${a.img}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
+            <td><div class="td-name">${a.name}</div></td>
+            <td>${a.genre}</td>
+        </tr>`,
+                    )
+                    .join("")}</tbody>`;
+        }).catch(() => {
+            dashboardArtists.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);">Gagal memuat data artis</td></tr>';
         });
     }
 }
@@ -839,8 +1235,8 @@ function buildConcertsTable() {
         .then((konsersData) => {
             t.innerHTML = `<thead><tr><th>#</th><th>Poster</th><th>Konser</th><th>Artis</th><th>Tanggal</th><th>Kota</th><th>Harga</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${konsersData
-          .map(
-              (c, i) => `
+                    .map(
+                        (c, i) => `
       <tr>
         <td>${i + 1}</td>
         <td><img class="concert-thumb" src="/storage/${c.img}" alt=""></td>
@@ -848,52 +1244,83 @@ function buildConcertsTable() {
         <td class="td-artist">${c.artist}</td>
         <td style="font-size:13px;">${c.date}</td>
         <td>${c.city}</td>
-        <td>Rp ${(c.price / 1000).toFixed(0)}K</td>
+        <td>Rp ${(c.price / 1000).toFixed(0)}rb</td>
         <td><span class="status-badge ${c.status === "on-sale" ? "status-on-sale" : "status-sold-out"}">${c.status === "on-sale" ? "ON SALE" : "SOLD OUT"}</span></td>
         <td><div class="td-actions">
-          <button class="btn-edit" onclick="editConcert(${c.id})"><i class="fas fa-edit"></i></button>
+          <a class="btn-edit" href="/admin/konsers/${c.id}/edit"><i class="fas fa-edit"></i></a>
           <button class="btn-del" onclick="deleteConcert(${c.id},this)"><i class="fas fa-trash"></i></button>
-          <button class="btn-view" onclick="openConcertDetail(${c.id})"><i class="fas fa-eye"></i></button>
         </div></td>
       </tr>`,
-          )
-          .join("")}</tbody>`;
+                    )
+                    .join("")}</tbody>`;
         })
-        .catch(() => {
+        .catch((error) => {
+            const errorMsg = error.message || "";
+            const message = errorMsg.includes("401") || errorMsg.includes("Unauthorized")
+                ? "Anda harus login terlebih dahulu untuk mengakses data konser"
+                : "Gagal memuat data konser";
             t.innerHTML =
-                '<tr><td colspan="9" style="text-align:center;color:var(--gray);">Gagal memuat data konser</td></tr>';
+                `<tr><td colspan="9" style="text-align:center;color:var(--gray);">${message}</td></tr>`;
         });
 }
 
-function buildArtistsTable() {
+async function buildArtistsTable() {
     const t = document.getElementById("admin-artists-table");
     if (!t) return;
-    t.innerHTML =
-        '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
-    loadArtistsFromAPI()
-        .then((artists) => {
-            t.innerHTML = `<thead><tr><th>#</th><th>Foto</th><th>Nama</th><th>Genre</th><th>Konser</th><th>Aksi</th></tr></thead>
-      <tbody>${artists
-          .map(
-              (a, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td><img class="concert-thumb" src="/storage/${a.img}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
-        <td><div class="td-name">${a.name}</div></td>
-        <td>${a.genre}</td>
-        <td>${a.concerts}</td>
-        <td><div class="td-actions">
-          <button class="btn-edit" onclick="showToast('info','Edit artis ${a.name}')"><i class="fas fa-edit"></i></button>
-          <button class="btn-del" onclick="deleteRow(this)"><i class="fas fa-trash"></i></button>
-        </div></td>
-      </tr>`,
-          )
-          .join("")}</tbody>`;
-        })
-        .catch(() => {
-            t.innerHTML =
-                '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Gagal memuat data artis</td></tr>';
-        });
+
+    // 1. Tampilkan loading spinner
+    t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+
+    try {
+        // 2. Ambil kedua data secara paralel menggunakan Promise.all
+        const [artists, konsers] = await Promise.all([
+            loadArtistsFromAPI(),
+            loadKonsersFromAPI()
+        ]);
+
+        // 3. Render HTML Table, looping utama dari data 'artists'
+        t.innerHTML = `
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Foto</th>
+                    <th>Nama</th>
+                    <th>Genre</th>
+                    <th>Konser</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${artists.map((a, i) => {
+                    // Cari jumlah konser yang punya artists_id cocok dengan id milik artis ini
+                    const jumlahKonser = konsers.filter(k => k.artists_id === a.id).length;
+
+                    console.log(`Artis: ${a.name}, Jumlah Konser: ${jumlahKonser}`); // Debug log
+
+                    return `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>
+                            <img class="concert-thumb" src="/storage/${a.img}" alt="${a.name}" style="border-radius:50%;width:40px;height:40px;object-fit:cover;">
+                        </td>
+                        <td><div class="td-name">${a.name}</div></td>
+                        <td>${a.genre}</td>
+                        <td>${jumlahKonser}</td>
+                        <td>
+                            <div class="td-actions">
+                                <a class="btn-edit" href="/admin/artists/${a.id}/edit"><i class="fas fa-edit"></i></a>
+                                <button class="btn-del" onclick="deleteArtists(${a.id},this)"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join("")}
+            </tbody>`;
+
+    } catch (error) {
+        console.error("Error loading artists table:", error);
+        // 4. Handle error jika salah satu API gagal
+        t.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;padding:30px;">Gagal memuat data artis atau konser</td></tr>';
+    }
 }
 
 function buildUsersTable() {
@@ -905,8 +1332,8 @@ function buildUsersTable() {
         .then((users) => {
             t.innerHTML = `<thead><tr><th>#</th><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${users
-          .map(
-              (u, i) => `
+                    .map(
+                        (u, i) => `
       <tr>
         <td>${i + 1}</td>
         <td><div class="td-name">${u.name}</div></td>
@@ -918,19 +1345,61 @@ function buildUsersTable() {
           <button class="btn-del" onclick="deleteRow(this)"><i class="fas fa-trash"></i></button>
         </div></td>
       </tr>`,
-          )
-          .join("")}</tbody>`;
+                    )
+                    .join("")}</tbody>`;
         })
         .catch(() => {
             t.innerHTML =
                 '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Gagal memuat data user</td></tr>';
         });
 }
+function buildMediaTable() {
+    const t = document.getElementById("admin-media-table");
+    if (!t) return;
 
-function editConcert(id) {
-    getKonserById(id).then((c) => {
-        if (c) openCrudModal("concert", c, id);
-    });
+    t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+
+    loadMediaFromAPI()
+    .then((media) => {
+            console.log("Data media dari database:", media);
+            t.innerHTML = `
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nama</th>
+                    <th>Gambar</th>
+                    <th>Location</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${media.map((m, index) => { // Ubah 'i' jadi 'index' biar gak bentrok
+
+                    // 1. Logika pengecekan gambaFr dimasukkan ke sini bray
+                    const gambarTag = (m.image && m.image !== "undefined" && m.image !== "")
+                        ? `<img src="${m.image}" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`
+                        : `<img src="/storage/img/artists.jpg" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`;
+
+                    // 2. WAJIB pakai kata 'return' kalau ada proses logic di atasnya
+                    return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><div class="td-name">${m.name}</div></td>
+                        <td>${gambarTag}</td> <td style="font-size:13px;color:var(--gray);">${m.location || '-'}</td>
+                        <td>
+                            <div class="td-actions">
+                                <button class="btn-edit" onclick="showToast('info','Edit media ${m.name}')"><i class="fas fa-edit"></i></button>
+                                <button class="btn-del" onclick="deleteMedia(${m.id}, this)"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join("")}
+            </tbody>`;
+        })
+        .catch((error) => {
+            console.error("Error media table:", error);
+            t.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;padding:30px;">Gagal memuat data media</td></tr>';
+        });
 }
 
 function deleteConcert(id, btn) {
@@ -938,12 +1407,52 @@ function deleteConcert(id, btn) {
     deleteKonserFromAPI(id)
         .then(() => {
             row.style.opacity = "0";
-            row.style.transition = "opacity 0.3s";
-            setTimeout(() => row.remove(), 300);
+            row.style.transition = "opacity 0.5s";
+            setTimeout(() => row.remove(), 3000);
             showToast("success", "Konser berhasil dihapus");
         })
         .catch((error) => {
             showToast("error", error.message || "Gagal menghapus konser");
+        });
+}
+function deleteArtists(id, btn) {
+    const row = btn.closest("tr");
+    deleteArtistsFromAPI(id)
+        .then(() => {
+            row.style.opacity = "0";
+            row.style.transition = "opacity 0.5s";
+            setTimeout(() => row.remove(), 3000);
+            showToast("success", "Artis berhasil dihapus");
+        })
+        .catch((error) => {
+            showToast("error", error.message || "Gagal menghapus artis");
+        });
+}
+
+function deleteUsers(id, btn) {
+    const row = btn.closest("tr");
+    deleteUsersFromAPI(id)
+        .then(() => {
+            row.style.opacity = "0";
+            row.style.transition = "opacity 0.5s";
+            setTimeout(() => row.remove(), 3000);
+            showToast("success", "User berhasil dihapus");
+        })
+        .catch((error) => {
+            showToast("error", error.message || "Gagal menghapus user");
+        });
+}
+function deleteMedia(id, btn) {
+    const row = btn.closest("tr");
+    deleteMediaFromAPI(id)
+        .then(() => {
+            row.style.opacity = "0";
+            row.style.transition = "opacity 0.5s";
+            setTimeout(() => row.remove(), 3000);
+            showToast("success", "Media berhasil dihapus");
+        })
+        .catch((error) => {
+            showToast("error", error.message || "Gagal menghapus media");
         });
 }
 
@@ -1068,7 +1577,6 @@ function openCrudModal(type, data, konserID = null) {
     const titles = {
         concert: "TAMBAH KONSER",
         artist: "TAMBAH ARTIS",
-        ticket: "TAMBAH TIKET KATEGORI",
         user: "TAMBAH USER",
     };
     document.getElementById("crud-modal-title").textContent = data
@@ -1172,114 +1680,37 @@ function saveCrudForm(type) {
         showToast(
             "success",
             "✓ " + type.charAt(0).toUpperCase() +
-                type.slice(1) +
-                " berhasil disimpan!",
+            type.slice(1) +
+            " berhasil disimpan!",
         );
     }
 }
 
-// ====== AUTH ======
-function openModal(type) {
-    if (type === "login" || type === "register") {
-        document.getElementById("modal-auth").classList.add("show");
-        switchAuthTab(type);
-    } else if (type === "editProfile") {
-        showToast("info", "Edit profil tersedia di tab Pengaturan Akun");
+
+// ====== ADMIN NAVBAR SEARCH ======
+function handleAdminSearch(event) {
+    if (event.key === 'Enter') {
+        const query = document.getElementById('navbar-search').value.trim();
+        if (query) {
+            // Get all concerts and filter by name
+            loadKonsersFromAPI().then((konsers) => {
+                const results = konsers.filter(k =>
+                    k.title.toLowerCase().includes(query.toLowerCase()) ||
+                    k.artist.toLowerCase().includes(query.toLowerCase()) ||
+                    k.city.toLowerCase().includes(query.toLowerCase())
+                );
+                if (results.length > 0) {
+                    showToast('success', `Ditemukan ${results.length} konser`);
+                    // Clear search
+                    document.getElementById('navbar-search').value = '';
+                } else {
+                    showToast('info', 'Konser tidak ditemukan');
+                }
+            }).catch(() => {
+                showToast('error', 'Gagal mencari konser');
+            });
+        }
     }
-}
-
-function closeModal(type) {
-    if (type === "auth")
-        document.getElementById("modal-auth").classList.remove("show");
-    if (type === "crud")
-        document.getElementById("modal-crud").classList.remove("show");
-    if (type === "video") {
-        document.getElementById("modal-video").classList.remove("show");
-        document.getElementById("yt-iframe").src = "";
-    }
-}
-
-function switchAuthTab(tab) {
-    document
-        .getElementById("tab-login")
-        .classList.toggle("active", tab === "login");
-    document
-        .getElementById("tab-register")
-        .classList.toggle("active", tab === "register");
-    document.getElementById("auth-login-form").style.display =
-        tab === "login" ? "block" : "none";
-    document.getElementById("auth-register-form").style.display =
-        tab === "register" ? "block" : "none";
-}
-
-function loginUser() {
-    const email = document.getElementById("login-email").value;
-    const pass = document.getElementById("login-password").value;
-    if (!email || !pass) {
-        showToast("error", "Email dan password harus diisi");
-        return;
-    }
-
-    loginUserWithAPI(email, pass)
-        .then((data) => {
-            const user = data.user || data;
-            currentUser = {
-                name: user.name || email.split("@")[0],
-                email: user.email || email,
-                avatar: (user.name || email).charAt(0).toUpperCase(),
-            };
-            document.getElementById("nav-auth-btns").style.display = "none";
-            document.getElementById("nav-user").style.display = "block";
-            document.getElementById("nav-avatar-initial").textContent =
-                currentUser.avatar;
-            closeModal("auth");
-            showToast("success", "Selamat datang, " + currentUser.name + "!");
-        })
-        .catch((error) => {
-            showToast("error", error.message || "Email atau password salah");
-        });
-}
-
-function loginDemo() {
-    document.getElementById("login-email").value = "adil@uhamka.ac.id";
-    document.getElementById("login-password").value = "primestage123";
-    loginUser();
-}
-
-function registerUser() {
-    const email = document.getElementById("reg-email").value;
-    const pass = document.getElementById("reg-password").value;
-    const first = document.getElementById("reg-firstname").value;
-    if (!email || !pass || !first) {
-        showToast("error", "Harap isi semua field yang diperlukan");
-        return;
-    }
-
-    registerUserWithAPI({
-        name: first,
-        email,
-        password: pass,
-        password_confirmation: pass,
-    })
-        .then(() => {
-            closeModal("auth");
-            showToast("success", "Akun berhasil dibuat! Silakan masuk.");
-            setTimeout(() => openModal("login"), 1000);
-        })
-        .catch((error) => {
-            showToast("error", error.message || "Gagal membuat akun");
-        });
-}
-
-function logout() {
-    axios
-        .post("/logout")
-        .then(() => {
-            window.location.href = "/dashboard";
-        })
-        .catch((error) => {
-            console.error("Logout Gagal = ", error);
-        });
 }
 
 // ====== CHECKOUT ======
@@ -1316,7 +1747,7 @@ function submitOrder() {
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-    
+
     showToast("info", "ℹ Memproses pembayaran Anda...");
 
     // Submit the form
@@ -1325,22 +1756,32 @@ function submitOrder() {
     }, 1000);
 }
 
-// ====== VIDEO MODAL ======
-function openVideoModal(type) {
-    const ytIds = {
-        coldplay: "YkgkThdzX-8",
-        noah: "wk39snYWQdc",
-        weeknd: "XXYlFuWEuKI",
-    };
-    const ytId = ytIds[type] || "YkgkThdzX-8";
-    document.getElementById("yt-iframe").src =
-        `https://www.youtube.com/embed/${ytId}?autoplay=1`;
-    document.getElementById("video-modal-title").textContent = type
-        ? type.charAt(0).toUpperCase() + type.slice(1) + " — Official Trailer"
-        : "Concert Trailer";
-    document.getElementById("modal-video").classList.add("show");
+// Tambahkan juga fungsi close ini agar saat modal ditutup, videonya berhenti berputar
+function closeVideoModal() {
+    const videoPlayer = document.getElementById("mp4-player");
+    const modalVideo = document.getElementById("modal-video");
+
+    if (videoPlayer && modalVideo) {
+        videoPlayer.pause();
+        modalVideo.classList.remove("show");
+    }
 }
 
+function closeModal(type) {
+    if (type === "video") {
+        const modalVideo = document.getElementById("modal-video");
+        const iframe = document.getElementById("yt-iframe");
+
+        if (modalVideo) {
+            modalVideo.classList.remove("show");
+        }
+        // WAJIB: Hapus src iframe saat modal ditutup agar video berhenti berputar di background
+        if (iframe) {
+            iframe.src = "";
+        }
+    }
+    // ... baris kode closeModal untuk type lain (auth, crud, gallery) tetap biarkan seperti semula
+}
 // ====== WISHLIST ======
 function toggleWishlist(el) {
     const icon = el.querySelector("i");
@@ -1359,26 +1800,30 @@ function toggleWishlist(el) {
 // ====== DELETE FORM HANDLERS ======
 function setupDeleteFormHandlers() {
     // Setup delete form handlers for artists, tickets, users, etc.
-    document.addEventListener("submit", async function(e) {
+    document.addEventListener("submit", async function (e) {
         const form = e.target;
-        
+
         // Only handle forms with DELETE method
         if (form.method.toUpperCase() !== "POST" || !form.querySelector('input[name="_method"][value="DELETE"]')) {
             return;
         }
-        
+
+        if (form.hasAttribute('data-manual') || form.getAttribute('data-manual') === 'true') {
+            return; // Biarkan form submit manual & halaman berpindah/reload
+        }
+
         e.preventDefault();
-        
+
         const action = form.action;
         const entityType = detectEntityType(action);
         const entityId = extractIdFromUrl(action);
-        
+
         // Show confirmation
         const entityName = detectEntityName(entityType, entityId);
         if (!confirm(`Apakah kamu yakin ingin menghapus ${entityName}?`)) {
             return;
         }
-        
+
         try {
             const response = await fetch(action, {
                 method: "DELETE",
@@ -1387,11 +1832,11 @@ function setupDeleteFormHandlers() {
                     "X-CSRF-TOKEN": csrfToken(),
                 },
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            
+
             // Remove the row from table with animation
             const row = form.closest("tr");
             if (row) {
@@ -1399,7 +1844,7 @@ function setupDeleteFormHandlers() {
                 row.style.transition = "opacity 0.3s";
                 setTimeout(() => row.remove(), 300);
             }
-            
+
             // Show success notification
             showToast("success", `✓ ${entityName} berhasil dihapus!`);
         } catch (error) {
@@ -1410,7 +1855,6 @@ function setupDeleteFormHandlers() {
 
 function detectEntityType(url) {
     if (url.includes("/api/artists/")) return "artis";
-    if (url.includes("/api/tickets/")) return "tiket";
     if (url.includes("/api/users/")) return "user";
     if (url.includes("/api/konsers/")) return "konser";
     return "data";
@@ -1424,7 +1868,6 @@ function extractIdFromUrl(url) {
 function detectEntityName(type, id) {
     const names = {
         artis: "artis",
-        tiket: "tiket",
         user: "pengguna",
         konser: "konser",
         data: "data"
@@ -1465,6 +1908,36 @@ function showToast(type, msg) {
     }, 3500);
 }
 
+// ====== SESSION MESSAGES (AUTH NOTIFICATIONS) ======
+function checkSessionMessages() {
+    // Cek notifikasi login required
+    const notifLoginEl = document.querySelector('[data-notif-login]');
+    if (notifLoginEl) {
+        const message = notifLoginEl.getAttribute('data-notif-login');
+        if (message) {
+            showToast('info', '🔐 ' + message + ' Silakan login atau buat akun baru.');
+        }
+    }
+
+    // Cek notifikasi error
+    const notifErrorEl = document.querySelector('[data-notif-error]');
+    if (notifErrorEl) {
+        const message = notifErrorEl.getAttribute('data-notif-error');
+        if (message) {
+            showToast('error', '❌ ' + message);
+        }
+    }
+
+    // Cek notifikasi success
+    const notifSuccessEl = document.querySelector('[data-notif-success]');
+    if (notifSuccessEl) {
+        const message = notifSuccessEl.getAttribute('data-notif-success');
+        if (message) {
+            showToast('success', '✓ ' + message);
+        }
+    }
+}
+
 // ====== AOS ANIMATION ======
 function initAOS() {
     const observer = new IntersectionObserver(
@@ -1494,10 +1967,40 @@ function initParticles() {
 
 // ====== NAVBAR SCROLL ======
 window.addEventListener("scroll", () => {
-    document
-        .getElementById("navbar")
-        .classList.toggle("scrolled", window.scrollY > 50);
+    const navbar = document.getElementById("navbar");
+    if (navbar) {
+        navbar.classList.toggle("scrolled", window.scrollY > 50);
+    }
 });
+
+// ====== NAVBAR DROPDOWN TOGGLE ======
+function setupNavDropdown() {
+    const navAvatar = document.querySelector(".nav-avatar");
+    if (!navAvatar) return;
+
+    // Toggle dropdown saat avatar diklik
+    navAvatar.addEventListener("click", function (e) {
+        e.stopPropagation();
+        this.classList.toggle("active");
+    });
+
+    // Close dropdown saat item diklik
+    document.querySelectorAll(".nav-dd-item").forEach((item) => {
+        item.addEventListener("click", function () {
+            navAvatar.classList.remove("active");
+        });
+    });
+
+    // Close dropdown saat klik di luar
+    document.addEventListener("click", function (e) {
+        if (
+            !navAvatar.contains(e.target) &&
+            !e.target.closest(".nav-dropdown")
+        ) {
+            navAvatar.classList.remove("active");
+        }
+    });
+}
 
 // ====== CLOSE MODALS ON OVERLAY CLICK ======
 document.querySelectorAll(".modal-overlay").forEach((overlay) => {
@@ -1512,6 +2015,18 @@ document.querySelectorAll(".modal-overlay").forEach((overlay) => {
 
 // ====== INIT ======
 document.addEventListener("DOMContentLoaded", () => {
+    // Cek session messages untuk notifikasi auth
+    checkSessionMessages();
+
+    // Setup dropdown toggle
+    setupNavDropdown();
+
+    // Initialize admin page if on admin dashboard
+    const pageAdmin = document.getElementById('page-admin');
+    if (pageAdmin) {
+        switchAdmin('admin');
+    }
+
     renderHomeConcerts();
     initParticles();
     initAOS();
@@ -1529,3 +2044,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+function getYoutubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}

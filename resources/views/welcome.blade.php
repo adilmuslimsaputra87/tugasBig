@@ -12,7 +12,11 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body data-user-logged-in="{{ auth()->check() ? 'true' : 'false' }}">
+<body data-user-logged-in="{{ auth()->check() ? 'true' : 'false' }}"
+    @if (session('notifLogin')) data-notif-login="{{ session('notifLogin') }}" @endif
+    @if (session('notifError')) data-notif-error="{{ session('notifError') }}" @endif
+    @if (session('notifSuccess')) data-notif-success="{{ session('notifSuccess') }}" @endif
+    @if (session('success')) data-notif-success="{{ session('success') }}" @endif>
 
     <!-- ====== NAVBAR ====== -->
     <nav id="navbar">
@@ -31,10 +35,6 @@
             <span class="nav-link" onclick="navigate('gallery')" id="nl-gallery">Gallery</span>
         </div>
         <div class="nav-right">
-            <div class="nav-search-wrap">
-                <i class="fas fa-search nav-search-icon"></i>
-                <input type="text" class="nav-search" placeholder="Cari konser...">
-            </div>
 
             @guest
                 <div id="nav-auth-btns">
@@ -44,22 +44,36 @@
             @endguest
 
             @auth
+                @if (auth()->user()->role === 'admin')
+                    <a href="/admin" class="nav-admin-btn" title="Buka Admin Panel">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Admin</span>
+                    </a>
+                @endif
                 <div id="nav-user">
-                    <div class="nav-avatar">
+                    <div class="nav-avatar" title="Buka menu profil">
                         <span id="nav-avatar-initial">
                             {{ strtoupper(Str::substr(Auth::user()->first_name, 0, 1) . Str::substr(Auth::user()->last_name, 0, 1)) }}
                         </span>
                         <div class="nav-dropdown">
-                            <div class="nav-dd-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profil Saya
+                            <div class="nav-dd-item" onclick="navigate('profile')">
+                                <i class="fas fa-user"></i>
+                                <span>Profil Saya</span>
                             </div>
-                            <div class="nav-dd-item" onclick="navigate('history')"><i class="fas fa-ticket-alt"></i> Tiket
-                                Saya</div>
+                            <div class="nav-dd-item" onclick="navigate('history')">
+                                <i class="fas fa-ticket-alt"></i>
+                                <span>Tiket Saya</span>
+                            </div>
                             @if (auth()->user()->role === 'admin')
-                                <div class="nav-dd-item" onclick="navigate('admin')"><i class="fas fa-shield-alt"></i> Admin
-                                    Panel</div>
+                                <div class="nav-dd-item" onclick="navigate('admin')">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Admin Panel</span>
+                                </div>
                             @endif
-                            <div class="nav-dd-item" style="border-top:1px solid var(--border);margin-top:4px;"
-                                onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar</div>
+                            <div class="nav-dd-item nav-dd-logout" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Keluar</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -219,11 +233,7 @@
             <p class="page-subtitle">Temukan konser favorit kamu dan dapatkan tiketnya sekarang</p>
         </div>
         <div class="filter-bar">
-            <div class="filter-search">
-                <i class="fas fa-search"></i>
-                <input type="text" id="concert-search" placeholder="Cari artis atau konser..."
-                    oninput="filterConcerts()">
-            </div>
+
             <select class="filter-select" id="filter-genre" onchange="filterConcerts()">
                 <option value="">Semua Genre</option>
                 <option>Rock</option>
@@ -246,9 +256,9 @@
                 <option value="price-asc">Harga: Terendah</option>
                 <option value="price-desc">Harga: Tertinggi</option>
             </select>
-            <button class="filter-btn active" onclick="filterConcerts('all')"><i class="fas fa-th"></i>
+            <button class="filter-btn" onclick="filterConcerts('all')"><i class="fas fa-th"></i>
                 Semua</button>
-            <button class="filter-btn" onclick="filterConcerts('indonesia')"><i class="fas fa-flag"></i>
+            <button class="filter-btn" onclick="filterConcerts('lokal')"><i class="fas fa-flag"></i>
                 Lokal</button>
             <button class="filter-btn" onclick="filterConcerts('internasional')"><i class="fas fa-globe"></i>
                 Internasional</button>
@@ -284,14 +294,21 @@
                 <h3>LINE-UP ARTIS</h3>
                 <div id="detail-lineup"></div>
                 <h3>GALERI</h3>
-                <div class="gallery-grid" id="detail-gallery"></div>
+                <div class="gallery-grid" id="detail-gallery">
+                <img id="detail-gallery-img" class="gallery-img" src="" alt="">
+                </div>
                 <h3>VIDEO TRAILER</h3>
-                <div class="video-item" style="margin-top:16px;" onclick="openVideoModal()">
-                    <img id="detail-trailer-thumb" src="" alt="">
-                    <div class="video-play-btn"><i class="fas fa-play"></i></div>
+                <div class="video-item" style="margin-top:16px;">
+
+                        <video id="detail-trailer" controls poster="" preload="metadata" style="width:100%;height:100%;border-radius:8px;z-index:999;">
+                            <source id="video-source" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+
                     <div class="video-item-info">
                         <div class="video-item-title" id="detail-trailer-title">Tonton Trailer</div>
                     </div>
+
                 </div>
             </div>
             <div class="ticket-sidebar">
@@ -299,10 +316,18 @@
                     <h3>PILIH TIKET</h3>
                     <div id="ticket-categories"></div>
                     <div class="qty-control" style="margin-top:20px;">
-                        <span style="font-size:13px;color:var(--gray);flex:1;">Jumlah Tiket</span>
-                        <button class="qty-btn" onclick="changeQty(-1)">−</button>
-                        <div class="qty-display" id="qty-display">1</div>
-                        <button class="qty-btn" onclick="changeQty(1)">+</button>
+                        @if ($tiket->isEmpty())
+                            <span style="font-size:13px;color:var(--gray);flex:1;">Tidak ada tiket tersedia</span>
+                            <span style="font-size:13px;color:var(--gray);flex:1;">Jumlah Tiket</span>
+                            <button class="qty-btn" onclick="changeQty(-1)" disabled>−</button>
+                            <div class="qty-display" id="qty-display">1</div>
+                            <button class="qty-btn" onclick="changeQty(1)" disabled>+</button>
+                        @else
+                            <span style="font-size:13px;color:var(--gray);flex:1;">Jumlah Tiket</span>
+                            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                            <div class="qty-display" id="qty-display">1</div>
+                            <button class="qty-btn" onclick="changeQty(1)">+</button>
+                        @endif
                     </div>
                     <div class="booking-summary">
                         <div class="summary-row">
@@ -337,10 +362,7 @@
             <p class="page-subtitle">Band dan artis terbaik yang akan tampil di PrimeStage</p>
         </div>
         <div class="filter-bar">
-            <div class="filter-search">
-                <i class="fas fa-search"></i>
-                <input type="text" id="artist-search" placeholder="Cari artis..." oninput="filterArtists()">
-            </div>
+
             <button class="filter-btn active" onclick="setArtistFilter('all',this)">Semua</button>
             <button class="filter-btn" onclick="setArtistFilter('indonesia',this)">Indonesia</button>
             <button class="filter-btn" onclick="setArtistFilter('international',this)">International</button>
@@ -359,75 +381,101 @@
         </div>
     </div>
 
-    <!-- ====== PROFILE PAGE ====== -->
-    <div class="page" id="page-profile">
-        <div class="profile-wrap">
-            <div class="profile-header">
-                <div class="profile-avatar-lg" id="profile-avatar-text">A</div>
-                <div>
-                    <div class="profile-name" id="profile-name">Adil Muslim</div>
-                    <div class="profile-email" id="profile-email">adil@example.com</div>
-                    <div class="profile-badges">
-                        <span class="profile-badge">MEMBER</span>
-                        <span class="profile-badge">VERIFIED</span>
+    @if (auth()->check())
+        <!-- ====== PROFILE PAGE ====== -->
+        <div class="page" id="page-profile">
+            <div class="profile-wrap">
+                <div class="profile-header">
+                    <div class="profile-avatar-lg" id="profile-avatar-text">{{ substr(auth()->user()->name, 0, 1) }}
                     </div>
-                </div>
-                <button class="btn-outline" style="margin-left:auto;font-size:13px;"
-                    onclick="openModal('editProfile')"><i class="fas fa-edit"></i>&nbsp; Edit Profil</button>
-            </div>
-            <div class="profile-tabs">
-                <div class="profile-tab active" onclick="switchProfileTab('orders',this)">Riwayat Pembelian</div>
-                <div class="profile-tab" onclick="switchProfileTab('settings',this)">Pengaturan Akun</div>
-            </div>
-            <div id="profile-tab-orders">
-                <div class="history-item" onclick="navigate('checkout')">
-                    <img class="history-img"
-                        src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=200&q=80" alt="">
                     <div>
-                        <div class="history-title">Coldplay — Music of the Spheres</div>
-                        <div class="history-meta"><i class="fas fa-calendar" style="margin-right:6px;"></i>15 Agustus
-                            2026 · GBK Jakarta</div>
-                        <div class="history-meta" style="margin-top:4px;"><i class="fas fa-ticket-alt"
-                                style="margin-right:6px;"></i>2x Festival — Rp 1.500.000/tiket</div>
-                    </div>
-                    <div class="history-total">
-                        <div class="history-amount">Rp 3.010.000</div>
-                        <div><span class="status-badge status-success">SUKSES</span></div>
-                    </div>
-                </div>
-                <div class="history-item">
-                    <img class="history-img"
-                        src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200&q=80" alt="">
-                    <div>
-                        <div class="history-title">NOAH — Dunia Batas World Tour</div>
-                        <div class="history-meta"><i class="fas fa-calendar" style="margin-right:6px;"></i>20
-                            September 2026 · Trans Studio Bandung</div>
-                        <div class="history-meta" style="margin-top:4px;"><i class="fas fa-ticket-alt"
-                                style="margin-right:6px;"></i>1x VIP — Rp 500.000/tiket</div>
-                    </div>
-                    <div class="history-total">
-                        <div class="history-amount">Rp 510.000</div>
-                        <div><span class="status-badge status-pending">PENDING</span></div>
+                        <div class="profile-name" id="profile-name">{{ auth()->user()->name }}</div>
+                        <div class="profile-email" id="profile-email">{{ auth()->user()->email }}</div>
+                        <div class="profile-badges">
+                            <span class="profile-badge"
+                                style="text-transform: uppercase;">{{ auth()->user()->role }}</span>
+                            <span class="profile-badge"
+                                style="text-transform: uppercase;">{{ auth()->user()->status }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="profile-tab-settings" style="display:none;">
-                <div class="ticket-box">
-                    <h3>PENGATURAN AKUN</h3>
-                    <div class="form-group"><label class="form-label">Nama Lengkap</label><input class="form-input"
-                            type="text" value="Adil Muslim Saputra"></div>
-                    <div class="form-group"><label class="form-label">Email</label><input class="form-input"
-                            type="email" value="adil@example.com"></div>
-                    <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input"
-                            type="tel" value="+62 812 3456 7890"></div>
-                    <div class="form-group"><label class="form-label">Password Baru</label><input class="form-input"
-                            type="password" placeholder="••••••••"></div>
-                    <button class="btn-book-now" onclick="showToast('success','Profil berhasil diperbarui!')"
-                        style="max-width:200px;">Simpan</button>
+                <div class="profile-tabs">
+                    <div class="profile-tab active" onclick="switchProfileTab('orders',this)">Riwayat Pembelian</div>
+                    <div class="profile-tab" onclick="switchProfileTab('settings',this)">Pengaturan Akun</div>
                 </div>
+                @if ($transaksi->isEmpty())
+                    <div class="no-history" style="text-align: center; padding: 20px;">
+                        Belum ada riwayat pembelian tiket.
+                    </div>
+                @else
+                    <div id="profile-tab-orders">
+                        @foreach ($transaksi as $order)
+                            @php
+                                // Mengambil relasi konser melalui tiket
+                                $konser = $order->ticket->konser ?? null;
+                            @endphp
+
+                            @if ($konser)
+                                <div class="history-item"
+                                    onclick="navigate('detail-transaksi', '{{ $order->id }}')">
+
+                                    <img class="history-img" src="{{ asset('storage/' . $konser->image) }}"
+                                        alt="{{ $konser->title }}">
+
+                                    <div>
+                                        <div class="history-title">{{ $konser->title }}</div>
+
+                                        <div class="history-meta">
+                                            <i class="fas fa-calendar" style="margin-right:6px;"></i>
+                                            {{ $order->created_at->format('d F Y') }} · {{ $konser->venue }},
+                                            {{ $konser->city }}
+                                        </div>
+
+                                        <div class="history-meta" style="margin-top:4px;">
+                                            <i class="fas fa-ticket-alt" style="margin-right:6px;"></i>
+                                            {{ $order->quantity }}x {{ $order->ticket->name }}
+                                            — Rp {{ number_format($order->ticket->price, 0, ',', '.') }}/tiket
+                                        </div>
+                                    </div>
+
+                                    <div class="history-total">
+                                        <div class="history-amount">Rp
+                                            {{ number_format($order->total_price, 0, ',', '.') }}</div>
+                                        <div>
+                                            <span
+                                                class="status-badge status-{{ strtolower($order->payment_status) }}">
+                                                {{ ucfirst($order->payment_status) }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+                <div id="profile-tab-settings" style="display:none;">
+                    <div class="ticket-box">
+                        <h3>PENGATURAN AKUN</h3>
+                        <form method="POST" action="/simpanProfile" id="profile-update-form">
+                            @csrf
+                            <div class="form-group"><label class="form-label">Nama Depan</label><input
+                                    class="form-input" type="text" value="{{ auth()->user()->first_name }}" name="first_name"></div>
+                            <div class="form-group"><label class="form-label">Nama Belakang</label><input
+                                    class="form-input" type="text" value="{{ auth()->user()->last_name }}" name="last_name"></div>
+                            <div class="form-group"><label class="form-label">Email</label><input class="form-input"
+                                    type="email" value="{{ auth()->user()->email }}" name="email"></div>
+                            <div class="form-group"><label class="form-label">Nomor HP</label><input
+                                    class="form-input" type="tel" value="{{ auth()->user()->phone }}" name="phone"></div>
+                            <div class="form-group"><label class="form-label">Password Baru</label><input
+                                    class="form-input" type="password" placeholder="••••••••" name="password"></div>
+                            <button class="btn-book-now" type="submit" style="max-width:200px;">Simpan</button>
+                        </form>
+                        </div>
+                    </div>
             </div>
         </div>
-    </div>
+    @endif
 
     <!-- ====== MODALS ====== -->
     <!-- Auth Modal -->
@@ -438,7 +486,8 @@
             <div class="modal-subtitle">Platform tiket konser premium</div>
             <div class="modal-tabs">
                 @if (auth()->check())
-                    <div class="modal-tab active" id="tab-profile" onclick="switchAuthTab('profile')">Profil</div>
+                    <div class="modal-tab active" id="tab-profile" onclick="switchAuthTab('profile')">Profil
+                    </div>
                     <div class="modal-tab" id="tab-logout" onclick="logout()">Keluar</div>
                 @else
                     <div class="modal-tab active" id="tab-login" onclick="switchAuthTab('login')">Masuk</div>
@@ -449,80 +498,77 @@
             <form action="{{ route('login') }}" method="post">
                 @csrf
                 <div id="auth-login-form">
-                    <div class="form-social">
-                        <button class="btn-social" type="button" onclick="loginWithGoogle()"><i
-                                class="fab fa-google" style="color:#ea4335;"></i> Google</button>
-                        <button class="btn-social" type="button" onclick="loginWithFacebook()"><i
-                                class="fab fa-facebook" style="color:#1877f2;"></i> Facebook</button>
-                    </div>
-                    <div class="form-divider"><span>atau dengan email</span></div>
                     <div class="form-group"><label class="form-label">Email</label><input class="form-input"
-                            type="email" id="login-email" name="email" placeholder="email@example.com"></div>
+                            type="email" id="login-email" name="email" placeholder="email@example.com">
+                    </div>
                     <div class="form-group"><label class="form-label">Password</label><input class="form-input"
                             type="password" id="login-password" name="password" placeholder="••••••••"></div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <span style="font-size:12px;color:var(--red);cursor:pointer;">Lupa password?</span>
-                    </div>
-                    <button class="btn-submit" type="submit">MASUK</button>
+                        <div class="btn-group">
+                            <button class="btn-submit" type="submit">MASUK</button>
+                            <button class="btn-daff" type="button" onclick="switchAuthTab('register')">Daftar Sekarang!</button>
+                        </div>
                 </div>
             </form>
             <!-- Register Form -->
-            <form action="{{ route('register') }}" method="post">
+            <form action="/register" method="post" onsubmit="registerUser(event)">
                 @csrf
-                <div id="auth-register-form" style="display:none;">
+                <div id="auth-register-form" style="display:none; overflow-y:auto; max-height:70vh;" >
                     <div class="form-row">
                         <div class="form-group"><label class="form-label">Nama Depan</label><input class="form-input"
-                                type="text" id="reg-firstname" placeholder="John"></div>
+                                type="text" id="reg-firstname" placeholder="John" name="first_name"></div>
                         <div class="form-group"><label class="form-label">Nama Belakang</label><input
-                                class="form-input" type="text" id="reg-lastname" placeholder="Doe"></div>
+                                class="form-input" type="text" id="reg-lastname" placeholder="Doe"
+                                name="last_name"></div>
                     </div>
                     <div class="form-group"><label class="form-label">Email</label><input class="form-input"
-                            type="email" id="reg-email" placeholder="email@example.com"></div>
+                            type="email" id="reg-email" placeholder="email@example.com" name="email"></div>
                     <div class="form-group"><label class="form-label">Nomor HP</label><input class="form-input"
-                            type="tel" placeholder="+62 812 3456 7890"></div>
-                    <div class="form-group"><label class="form-label">Tanggal Lahir</label><input class="form-input"
-                            type="date" id="reg-dob"></div>
+                            type="tel" id="reg-phone" placeholder="+62 812 3456 7890" name="phone"></div>
                     <div class="form-group"><label class="form-label">Password</label><input class="form-input"
-                            type="password" id="reg-password" placeholder="Min. 8 karakter"></div>
+                            type="password" id="reg-password" placeholder="Min. 8 karakter" name="password">
+                    </div>
                     <div class="form-group"><label class="form-label">Konfirmasi Password</label><input
-                            class="form-input" type="password" placeholder="Ulangi password"></div>
-                    <label class="form-checkbox" style="margin-bottom:16px;"><input type="checkbox" required> Saya
+                            class="form-input" id="reg-confirm-password" type="password" placeholder="Ulangi password"></div>
+                    <label class="form-checkbox" style="margin-bottom:16px;"><input type="checkbox" required>
+                        Saya
                         setuju dengan <span style="color:var(--red);">Syarat &amp; Ketentuan</span></label>
-                    <button class="btn-submit" type="submit">BUAT AKUN</button>
+                    <button class="btn-submit" type="submit" >BUAT AKUN</button>
                 </div>
-        </div>
-    </div>
-
-    <!-- CRUD Modal -->
-    <div class="modal-overlay" id="modal-crud">
-        <div class="modal crud-modal" style="max-width:600px;max-height:85vh;overflow-y:auto;">
-            <button class="modal-close" onclick="closeModal('crud')"><i class="fas fa-times"></i></button>
-            <div class="modal-title" id="crud-modal-title">TAMBAH DATA</div>
-            <div id="crud-modal-body"></div>
+            </form>
         </div>
     </div>
 
     <!-- Video Modal -->
     <div class="modal-overlay" id="modal-video">
-        <div class="modal" style="max-width:800px;padding:16px;">
-            <button class="modal-close" onclick="closeModal('video')" style="z-index:10;"><i
-                    class="fas fa-times"></i></button>
-            <div
-                style="background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;">
-                <iframe id="yt-iframe" width="100%" height="100%" src="" frameborder="0"
-                    allow="autoplay;encrypted-media" allowfullscreen style="aspect-ratio:16/9;"></iframe>
-            </div>
-            <div style="padding:12px 4px 4px;font-family:var(--font-head);font-size:20px;letter-spacing:2px;"
-                id="video-modal-title"></div>
+    <div class="modal" style="max-width:800px;padding:16px;">
+        <button class="modal-close" onclick="closeVideoModal()" style="z-index:10;">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div style="background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;">
+
+            <video id="mp4-player" width="100%" height="100%" controls style="aspect-ratio:16/9; object-fit: contain;">
+                <source id="video-source" src="" type="video/mp4">
+                Browser Anda tidak mendukung pemutaran video HTML5.
+            </video>
+
+        </div>
+
+        <div style="padding:12px 4px 4px;font-family:var(--font-head);font-size:20px;letter-spacing:2px;" id="video-modal-title">
+            OFFICIAL CONCERT TRAILER
         </div>
     </div>
-
+</div>
     <!-- Toast Container -->
     <div class="toast" id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="js/script.js"></script>
+
+    <body data-notif-success="{{ session('success') }}" data-notif-error="{{ $errors->first('email') }}">
+        <script src="{{ asset('js/script.js') }}"></script>
+    </body>
+
 </body>
 
 </html>

@@ -52,9 +52,13 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * PERBAIKAN SINKRONISASI: Mengubah target model menjadi Transaksi
+     * agar sesuai dengan class yang di-import pada UserController.
+     */
     public function transactions()
-{
-    return $this->hasMany(Transaction::class, 'users_id');
+    {
+        return $this->hasMany(Transaksi::class, 'users_id');
+    }
 }
 
-}

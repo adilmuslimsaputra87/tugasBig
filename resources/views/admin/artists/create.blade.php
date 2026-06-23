@@ -19,7 +19,7 @@
             <h1 class="admin-title">TAMBAH ARTIS</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('artists.store') }}" enctype="multipart/form-data">
+        <form class="form-container" method="POST" action="/simpanArtis" enctype="multipart/form-data">
             @csrf
 
             <div class="form-group">
@@ -57,7 +57,7 @@
 
             <div class="form-group">
                 <label class="form-label">Foto Artis</label>
-                <input type="file" name="image" class="form-input" accept="image/*">
+                <input type="file" name="image" class="form-input">
                 @error('image') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
             </div>
 
@@ -71,15 +71,6 @@
                 <label class="form-label">Instagram</label>
                 <input type="text" name="instagram" class="form-input" placeholder="@username" value="{{ old('instagram') }}">
                 @error('instagram') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-input" required>
-                    <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Aktif</option>
-                    <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
-                </select>
-                @error('status') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
             </div>
 
             <div class="btn-group">

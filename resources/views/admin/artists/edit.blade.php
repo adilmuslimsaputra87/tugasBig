@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/css1.css">
-    
+
 </head>
 <body>
     <div class="admin-page">
@@ -18,7 +18,7 @@
             <h1 class="admin-title">EDIT ARTIS</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('artists.update', $artist->id) }}" enctype="multipart/form-data">
+        <form class="form-container" method="POST" action="{{ route('admin.artists.update', $artist->id) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -74,15 +74,6 @@
                 <label class="form-label">Instagram</label>
                 <input type="text" name="instagram" class="form-input" placeholder="@username" value="{{ old('instagram', $artist->instagram) }}">
                 @error('instagram') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-input" required>
-                    <option value="active" {{ old('status', $artist->status) == 'active' ? 'selected' : '' }}>Aktif</option>
-                    <option value="inactive" {{ old('status', $artist->status) == 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
-                </select>
-                @error('status') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
             </div>
 
             <div class="btn-group">

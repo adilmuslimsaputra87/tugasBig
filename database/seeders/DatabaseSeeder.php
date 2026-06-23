@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,15 +17,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+       $adminExists = User::where('email', 'admin@primestage.com')->exists();
 
-        User::create([
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
-            'email' => 'admin@gmail.com',
-            'email_verified_at' => now(),
-            'password' => 'admin123',
-            'remember_token' => Str::random(10),
-        ]);
+        if (!$adminExists) {
+            User::create([
+                'first_name' => 'Admin',
+                'last_name' => 'PrimeStage',
+                'email' => 'admin@primestage.com',
+                'phone' => '081234567890',
+                'password' => Hash::make('admin12345'),
+                'role' => 'admin',
+                'status' => 'active',
+            ]);
+
+            echo "✓ Admin user berhasil dibuat!\n";
+            echo "Email: admin@primestage.com\n";
+            echo "Password: admin12345\n";
+        } else {
+            echo "! Admin user sudah ada di database.\n";
+        }
     }
 }

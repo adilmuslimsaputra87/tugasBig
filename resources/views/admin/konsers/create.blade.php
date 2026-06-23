@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/css1.css">
-    
+
 </head>
 
 <body>
@@ -21,7 +21,7 @@
             <h1 class="admin-title">TAMBAH KONSER</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('konsers.store') }}" enctype="multipart/form-data">
+        <form class="form-container" method="POST" action="/simpanKonser" enctype="multipart/form-data">
             @csrf
 
             <div class="form-group">
@@ -34,22 +34,23 @@
             </div>
 
             <div class="form-row">
-               <div class="form-group">
-    <label class="form-label">Artis</label>
-    <select name="artist_id" class="form-input" required>
-        <option value="">Pilih Artis/Band</option>
+                <div class="form-group">
+                    <label class="form-label">Artis</label>
+                    <select name="artists_id" class="form-input" required>
+                        <option value="">Pilih Artis/Band</option>
 
-        @foreach ($artists as $artist)
-            <option value="{{ $artist->id }}" {{ old('artist_id') == $artist->id ? 'selected' : '' }}>
-                {{ $artist->name }}
-            </option>
-        @endforeach
-    </select>
+                        @foreach ($artists as $artist)
+                            <option value="{{ $artist->id }}"
+                                {{ old('artists_id') == $artist->id ? 'selected' : '' }}>
+                                {{ $artist->name }}
+                            </option>
+                        @endforeach
+                    </select>
 
-    @error('artist_id')
-        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
-    @enderror
-</div>  
+                    @error('artists_id')
+                        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
+                    @enderror
+                </div>
                 <div class="form-group">
                     <label class="form-label">Genre</label>
                     <select name="genre" class="form-input">
@@ -122,21 +123,29 @@
                 </div>
 
                 <div class="form-group">
-    <label class="form-label">Harga Mulai (Rp)</label>
-    <input type="text" name="price" id="price" class="form-input" placeholder="500.000"
-        value="{{ old('price') ? number_format(old('price'), 0, ',', '.') : '' }}" required
-        oninput="formatRupiah(this)">
+                    <label class="form-label">Harga Mulai (Rp)</label>
+                    <input type="text" name="price" id="price" class="form-input" placeholder="500.000"
+                        value="{{ old('price') ? number_format(old('price'), 0, ',', '.') : '' }}" required
+                        oninput="formatRupiah(this)">
 
-    @error('price')
-        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
-    @enderror
-</div>
+                    @error('price')
+                        <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
+                    @enderror
+                </div>
             </div>
 
             <div class="form-group form-row-full">
                 <label class="form-label">Deskripsi</label>
                 <textarea name="description" class="form-input form-textarea" placeholder="Deskripsi konser...">{{ old('description') }}</textarea>
                 @error('description')
+                    <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="form-group form-row-full">
+                <label class="form-label">Tambahkan Trailer Konser</label>
+                <input type="file" name="trailer" class="form-input" placeholder="Masukkan Video" value="{{ old('trailer') }}" accept="video/*">
+                @error('trailer')
                     <span style="color: var(--red); font-size: 12px;">{{ $message }}</span>
                 @enderror
             </div>
@@ -206,25 +215,25 @@
     </div>
     <script>
         function formatRupiah(element) {
-    // Ambil value, hilangkan semua karakter selain angka
-    let value = element.value.replace(/[^,\d]/g, '').toString();
+            // Ambil value, hilangkan semua karakter selain angka
+            let value = element.value.replace(/[^,\d]/g, '').toString();
 
-    // Lakukan memformat angka dengan titik setiap 3 digit
-    let split = value.split(',');
-    let sisa = split[0].length % 3;
-    let rupiah = split[0].substr(0, sisa);
-    let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            // Lakukan memformat angka dengan titik setiap 3 digit
+            let split = value.split(',');
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
 
-    if (ribuan) {
-        let separator = sisa ? '.' : '';
-        rupiah += separator + ribuan.join('.');
-    }
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
 
-    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
 
-    // Masukkan kembali hasil format ke dalam input
-    element.value = rupiah;
-}
+            // Masukkan kembali hasil format ke dalam input
+            element.value = rupiah;
+        }
     </script>
 </body>
 

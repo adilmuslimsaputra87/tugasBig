@@ -19,14 +19,21 @@
         <input type="hidden" name="ticket_id" id="ticket_id" value="{{ $ticket?->id }}">
         <input type="hidden" name="quantity" id="quantity" value="{{ $qty ?? 1 }}">
         @php
-            $ticketPrice = $ticket?->price ?? 0;
-            $checkoutTitle = $ticket?->konser
-                ? $ticket->konser->artist . ' — ' . $ticket->konser->title
-                : 'Concert Title';
-            $checkoutMeta = $ticket?->konser ? $ticket->konser->date . ' · ' . $ticket->konser->venue : 'Date · Venue';
-            $checkoutCat = $ticket ? $ticket->name . ' × ' . ($qty ?? 1) : '';
-            $checkoutImg = $ticket?->konser?->image ? '/storage/' . $ticket->konser->image : '';
-            $checkoutTotal = $ticketPrice * ($qty ?? 1) + 10000;
+        $ticketPrice = $ticket?->price ?? 0;
+        $checkoutTitle = $ticket?->konser
+            ? ($ticket->konser->name ?? 'Concert Title')
+            : 'Concert Title';
+
+        if ($ticket?->konser) {
+            $dateStr = $ticket->konser->date;
+            $formattedDate = date('d F Y', strtotime($dateStr));
+            $checkoutMeta = $formattedDate . ' · ' . ($ticket->konser->venue ?? 'Venue');
+        } else {
+            $checkoutMeta = 'Date · Venue';
+        }
+        $checkoutCat = $ticket ? $ticket->name . ' × ' . ($qty ?? 1) : '';
+        $checkoutImg = $ticket?->konser?->image ? '/storage/' . $ticket->konser->image : '';
+        $checkoutTotal = $ticketPrice * ($qty ?? 1) + 10000;
         @endphp
         <div class="page active" id="page-checkout">
             <div class="checkout-wrap">

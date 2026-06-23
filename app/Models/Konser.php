@@ -13,7 +13,7 @@ class Konser extends Model
 
     protected $fillable = [
         'title',
-        'artist',
+        'artists_id',
         'genre',
         'date',
         'time',
@@ -21,6 +21,7 @@ class Konser extends Model
         'city',
         'description',
         'image',
+        'trailer',
         'price',
         'capacity',
         'status',
@@ -31,4 +32,9 @@ class Konser extends Model
         'date' => 'date',
         'price' => 'decimal:0',
     ];
+
+    public function artist()
+    {
+        return $this->belongsTo(Artist::class, 'artists_id'); // sesuaikan foreign key-nya
+    }
 }

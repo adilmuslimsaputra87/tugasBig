@@ -18,6 +18,5 @@ class Artist extends Model
         'image',
         'bio',
         'instagram',
-        'status'
     ];
 }

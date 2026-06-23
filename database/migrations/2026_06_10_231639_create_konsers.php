@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('konsers', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('artist');
+            $table->foreignId('artists_id')->nullable()->constrained('artists')->nullOnDelete();
             $table->string('genre')->nullable();
             $table->dateTime('date');
             $table->time('time')->default('19:00');
@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('city');
             $table->longText('description')->nullable();
             $table->string('image')->nullable();
+            $table->string('trailer')->nullable();
             $table->unsignedBigInteger('price')->default(0);
             $table->unsignedInteger('capacity')->default(1000);
             $table->enum('status', ['draft', 'published', 'sold_out', 'cancelled'])->default('draft');

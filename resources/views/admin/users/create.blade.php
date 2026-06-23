@@ -17,7 +17,7 @@
             <h1 class="admin-title">TAMBAH USER</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('users.store') }}">
+        <form class="form-container" method="POST" action="/simpanUser">
             @csrf
 
             <div class="form-row">

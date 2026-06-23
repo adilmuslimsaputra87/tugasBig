@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/css1.css">
-    
+
 </head>
 <body>
     <div class="admin-page">
@@ -18,7 +18,7 @@
             <h1 class="admin-title">TAMBAH TIKET</h1>
         </div>
 
-        <form id="ticketForm" class="form-container" method="POST" action="{{ route('tickets.store') }}">
+        <form id="ticketForm" class="form-container" method="POST" action="/simpanTiket">
             @csrf
 
             <div class="form-group">
@@ -27,7 +27,7 @@
                     <option value="">Pilih Konser</option>
                     @foreach($konsers as $konser)
                         <option value="{{ $konser->id }}" {{ old('konser_id') == $konser->id ? 'selected' : '' }}>
-                            {{ $konser->artist }} — {{ $konser->title }}
+                            {{ $konser->title}} - {{ $konser->artist?->name ?? 'N/A' }}
                         </option>
                     @endforeach
                 </select>

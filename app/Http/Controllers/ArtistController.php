@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Artist;
 use Illuminate\Http\Request;
+use App\Traits\ApiResponse;
 
 class ArtistController extends Controller
 {
+    use ApiResponse;
+
     public function index()
     {
         $artists = Artist::all();
@@ -27,7 +30,6 @@ class ArtistController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'bio' => 'nullable|string',
             'instagram' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
         ]);
 
         if ($request->hasFile('image')) {
@@ -35,9 +37,32 @@ class ArtistController extends Controller
             $validated['image'] = $path;
         }
 
-       $artist = Artist::create($validated);
+        $artist = Artist::create($validated);
 
         return redirect('/admin')->with('success', 'Artis berhasil ditambahkan!');
+    }
+
+    /**
+     * Store via REST API
+     */
+    public function storeApi(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'genre' => 'nullable|string|max:100',
+                'country' => 'required|in:indonesia,internasional',
+                'image' => 'nullable|string',
+                'bio' => 'nullable|string',
+                'instagram' => 'nullable|string|max:100',
+            ]);
+
+            $artist = Artist::create($validated);
+
+            return $this->apiSuccess($artist, 'Artis berhasil ditambahkan', 201);
+        } catch (\Exception $e) {
+            return $this->apiError('Gagal menambahkan artis: ' . $e->getMessage(), 422);
+        }
     }
 
     public function show(Artist $artist)
@@ -59,7 +84,6 @@ class ArtistController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'bio' => 'nullable|string',
             'instagram' => 'nullable|string|max:100',
-            'status' => 'required|in:active,inactive',
         ]);
 
         if ($request->hasFile('image')) {
@@ -67,15 +91,52 @@ class ArtistController extends Controller
             $validated['image'] = $path;
         }
 
-      $artist->update($validated);
+        $artist->update($validated);
 
         return redirect('/admin')->with('success', 'Artis berhasil diperbarui!');
     }
-   public function destroy(Artist $artist)
+
+    /**
+     * Update via REST API
+     */
+    public function updateApi(Request $request, Artist $artist)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'genre' => 'nullable|string|max:100',
+                'country' => 'required|in:indonesia,internasional',
+                'image' => 'nullable|string',
+                'bio' => 'nullable|string',
+                'instagram' => 'nullable|string|max:100',
+            ]);
+
+            $artist->update($validated);
+
+            return $this->apiSuccess($artist, 'Artis berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->apiError('Gagal memperbarui artis: ' . $e->getMessage(), 422);
+        }
+    }
+
+    public function destroy(Artist $artist)
     {
         $artist->delete();
 
-        // Alihkan halaman ke daftar artis setelah menghapus
         return redirect('/admin/artists')->with('success', 'Artis berhasil dihapus!');
+    }
+
+    /**
+     * Delete via REST API
+     */
+    public function destroyApi(Artist $artist)
+    {
+        try {
+            $artist->delete();
+
+            return $this->apiSuccess(null, 'Artis berhasil dihapus', 200);
+        } catch (\Exception $e) {
+            return $this->apiError('Gagal menghapus artis: ' . $e->getMessage(), 422);
+        }
     }
 }

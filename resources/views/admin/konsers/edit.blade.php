@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/css1.css">
-    
+
 </head>
 <body>
     <div class="admin-page">
@@ -18,7 +18,7 @@
             <h1 class="admin-title">EDIT KONSER</h1>
         </div>
 
-        <form class="form-container" method="POST" action="{{ route('konsers.update', $konser->id) }}" enctype="multipart/form-data">
+        <form class="form-container" method="POST" action="{{ route('admin.konsers.update', $konser->id) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -31,8 +31,15 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Artis</label>
-                    <input type="text" name="artist" class="form-input" placeholder="Nama artis/band..." value="{{ old('artist', $konser->artist) }}" required>
-                    @error('artist') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
+                    <select name="artists_id" class="form-input" required>
+                        <option value="">Pilih Artis/Band</option>
+                        @foreach($artists as $artist)
+                            <option value="{{ $artist->id }}" {{ old('artists_id', $konser->artists_id) == $artist->id ? 'selected' : '' }}>
+                                {{ $artist->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('artists_id') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="form-group">
@@ -101,6 +108,11 @@
                 <label class="form-label">Deskripsi</label>
                 <textarea name="description" class="form-input form-textarea" placeholder="Deskripsi konser...">{{ old('description', $konser->description) }}</textarea>
                 @error('description') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
+            </div>
+            <div class="form-group form-row-full">
+                <label class="form-label"><span class="ai-video"></span> Trailer</label>
+                <input type="file" name="trailer" class="form-input" placeholder="Link trailer konser..." value="{{ old('trailer', $konser->trailer) }}" accept="video/*">
+                @error('trailer') <span style="color: var(--red); font-size: 12px;">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-row">

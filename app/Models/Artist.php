@@ -22,6 +22,6 @@ class Artist extends Model
     public function konsers(): HasMany
     {
         // Sesuaikan 'artist_id' dengan nama kolom foreign key yang ada di tabel konsers kamu
-        return $this->hasMany(Konser::class, 'artist_id');
+        return $this->hasMany(Konser::class, 'artists_id');
     }
 }

@@ -19,15 +19,24 @@ class UserController extends Controller
     public function dashboard()
     {
         $konsers = Konser::all();
-        $transaksi = Transaksi::all();
         $artists = Artist::all();
         $tiket = Ticket::all();
+
+        // FIX BUG 3: Hanya ambil transaksi milik user yang sedang login agar tidak bocor
+        $transaksi = Auth::check()
+            ? Transaksi::where('users_id', Auth::id())->with('ticket.konser')->get()
+            : collect();
 
         return view('welcome', compact('konsers', 'transaksi', 'artists', 'tiket'));
     }
 
     public function index()
     {
+        // Pastikan hanya admin (Web Guard) yang bisa masuk halaman manajemen user
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $users = User::all();
         return view('admin', compact('users'));
     }
@@ -37,6 +46,11 @@ class UserController extends Controller
      */
     public function indexApi()
     {
+        // FIX BUG 1: Proteksi API dari user biasa atau guest
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return $this->apiError('Unauthorized: Admin access required', 403);
+        }
+
         $users = User::select('id', 'first_name', 'last_name', 'email', 'phone', 'role', 'status', 'created_at')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -59,11 +73,18 @@ class UserController extends Controller
 
     public function create()
     {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
         return view('admin.users.create');
     }
 
     public function store(Request $request)
     {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -75,21 +96,19 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        // $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name']; // Menjaga sinkronisasi kolom 'name' saat menambahkan user baru
 
-        // dd($validated);
-
-        $user = User::create($validated);
+        User::create($validated);
 
         return redirect('/admin')->with('success', 'User baru berhasil ditambahkan!');
     }
 
     public function register(Request $request)
     {
+        // FIX BUG 2: Tambahkan unique:users,email agar tidak crash saat email ganda
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8',
         ]);
@@ -97,9 +116,7 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         $validated['role'] = 'user';
         $validated['status'] = 'active';
-        // $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name']; // Menjaga sinkronisasi kolom 'name' saat menambahkan user baru
 
-        // dd($validated);
         try {
             $user = User::create($validated);
 
@@ -107,7 +124,7 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'Registrasi berhasil',
                 'data' => $user
-            ], 201); // Status code 201: Created
+            ], 201);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -119,16 +136,26 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         return response()->json($user);
     }
 
     public function edit(User $user)
     {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
         return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -151,32 +178,33 @@ class UserController extends Controller
 
     public function simpanProfile(Request $request)
     {
-        $user = auth()->user();
-        // dd($request->all());
+        $user = Auth::user();
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'user',
-            'status' => 'active',
         ]);
 
+        // FIX BUG 4: Jangan paksa ganti role lewat validasi agar admin tidak turun jabatan
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
 
-        // dd($validated);
-
-        User::where('id', $user->id)->update($validated);
+        $user->update($validated);
         return redirect('/')->with('success', 'Profile berhasil diperbarui!');
     }
 
     public function destroy(User $user)
     {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user->delete();
         return redirect('/admin')->with('success', 'User berhasil dihapus!');
     }
@@ -187,36 +215,35 @@ class UserController extends Controller
     public function destroyApi(User $user)
     {
         try {
-            $user->delete();
+            // FIX BUG 1: Tambahkan gerbang keamanan Admin pada API destroy
+            if (!Auth::check() || Auth::user()->role !== 'admin') {
+                return $this->apiError('Unauthorized: Admin access required', 403);
+            }
 
+            $user->delete();
             return $this->apiSuccess(null, 'User berhasil dihapus', 200);
         } catch (\Exception $e) {
             return $this->apiError('Gagal menghapus user: ' . $e->getMessage(), 422);
         }
     }
 
-public function login(Request $request)
+    public function login(Request $request)
     {
-        // 1. Validasi Inputan
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // 2. Cari User Berdasarkan Email
         $user = User::where('email', $credentials['email'])->first();
 
-        // 3. Cek Password & Proses Login Berhasil
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
             $request->session()->regenerate();
 
-            // Respon jika sukses (API Request)
             if ($request->expectsJson()) {
                 return $this->apiSuccess($user, 'Login berhasil', 200);
             }
 
-            // Respon jika sukses (Web Biasa) berdasarkan Role
             if ($user->role === 'admin') {
                 return redirect('/admin')->with('success', 'Login berhasil');
             } else {
@@ -224,17 +251,10 @@ public function login(Request $request)
             }
         }
 
-        // ========================================================
-        // JIKA LOGIN GAGAL (Kredensial salah / User tidak ditemukan)
-        // ========================================================
-
-        // 4. Respon jika gagal (API Request)
         if ($request->expectsJson()) {
             return $this->apiError('gagal masuk derr', 401);
         }
 
-        // 5. Respon jika gagal (Web Biasa)
-        // Mengubah pesan agar sesuai dengan penangkap notifikasi JavaScript kamu
         return back()
             ->withErrors(['email' => 'gagal masuk derr'])
             ->withInput($request->only('email'));
@@ -246,12 +266,10 @@ public function login(Request $request)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Respon jika logout sukses (API Request)
         if ($request->expectsJson()) {
             return $this->apiSuccess(null, 'Logout berhasil', 200);
         }
 
-        // Respon jika logout sukses (Web Biasa)
         return redirect('/dashboard')->with('success', 'Logout berhasil');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Artist;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ArtistController extends Controller
 {
@@ -27,14 +28,18 @@ class ArtistController extends Controller
             'name' => 'required|string|max:255',
             'genre' => 'nullable|string|max:100',
             'country' => 'required|in:indonesia,internasional',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'bio' => 'nullable|string',
             'instagram' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('artists', 'public');
-            $validated['image'] = $path;
+            // Upload ke Cloudinary dan masukkan ke folder 'artists'
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'artists'
+            ]);
+            // Ambil URL secure https
+            $validated['image'] = $cloudinaryImage->getSecurePath();
         }
 
         $artist = Artist::create($validated);
@@ -52,7 +57,7 @@ class ArtistController extends Controller
                 'name' => 'required|string|max:255',
                 'genre' => 'nullable|string|max:100',
                 'country' => 'required|in:indonesia,internasional',
-                'image' => 'nullable|string',
+                'image' => 'nullable|string', // API menerima string/URL langsung
                 'bio' => 'nullable|string',
                 'instagram' => 'nullable|string|max:100',
             ]);
@@ -87,8 +92,11 @@ class ArtistController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('artists', 'public');
-            $validated['image'] = $path;
+            // FIX: Sekarang proses update juga upload langsung ke Cloudinary
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'artists'
+            ]);
+            $validated['image'] = $cloudinaryImage->getSecurePath();
         }
 
         $artist->update($validated);

@@ -13,7 +13,7 @@
 </head>
 
 <body data-user-logged-in="{{ auth()->check() ? 'true' : 'false' }}"
-    @if (session('notifLogin')) data-notif-login="{{ session('notifLogin') }}" @endif
+    @if (session('notifLogin')) data-notif-l ogin="{{ session('notifLogin') }}" @endif
     @if (session('notifError')) data-notif-error="{{ session('notifError') }}" @endif
     @if (session('notifSuccess')) data-notif-success="{{ session('notifSuccess') }}" @endif
     @if (session('success')) data-notif-success="{{ session('success') }}" @endif>

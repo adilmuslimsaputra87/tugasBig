@@ -6,6 +6,7 @@ use App\Models\Konser;
 use Illuminate\Http\Request;
 use App\Models\Artist;
 use App\Traits\ApiResponse;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; // <-- PASTIKAN IMPORT INI ADA
 
 class KonserController extends Controller
 {
@@ -53,16 +54,23 @@ class KonserController extends Controller
             'type' => 'required|in:lokal,internasional',
         ]);
 
+        // FIX: Upload Poster ke Cloudinary
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('konsers', 'public');
-            $validated['image'] = $path;
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'konsers'
+            ]);
+            $validated['image'] = $cloudinaryImage->getSecurePath();
         }
 
+        // FIX: Upload Video Trailer ke Cloudinary
         if ($request->hasFile('trailer')) {
-            $path = $request->file('trailer')->store('konsers/trailers', 'public');
-            $validated['trailer'] = $path;
+            $cloudinaryVideo = Cloudinary::upload($request->file('trailer')->getRealPath(), [
+                'folder' => 'konsers/trailers',
+                'resource_type' => 'video' // Wajib ditambahkan khusus untuk file video
+            ]);
+            $validated['trailer'] = $cloudinaryVideo->getSecurePath();
         }
-// dd($validated);
+
         $konser = Konser::create($validated);
 
         return redirect('/admin')->with('success', 'Konser berhasil ditambahkan!');
@@ -93,8 +101,7 @@ class KonserController extends Controller
                 'capacity' => 'required|integer|min:1',
                 'status' => 'required|in:draft,published,sold_out,cancelled',
                 'type' => 'required|in:lokal,internasional',
-                'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
-
+                'trailer' => 'nullable|string',
             ]);
 
             $konser = Konser::create($validated);
@@ -124,6 +131,12 @@ class KonserController extends Controller
      */
     public function update(Request $request, Konser $konser)
     {
+        // FIX BUG: Bersihkan format titik harga pada proses update form web
+        if ($request->has('price')) {
+            $cleanPrice = str_replace('.', '', $request->price);
+            $request->merge(['price' => $cleanPrice]);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'artists_id' => 'nullable|exists:artists,id',
@@ -133,25 +146,30 @@ class KonserController extends Controller
             'venue' => 'required|string|max:255',
             'city' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-            'trailer' => 'nullable|file|mimes:mp4,avi,mov',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
             'price' => 'required|numeric|min:0',
             'capacity' => 'required|integer|min:1',
             'status' => 'required|in:draft,published,sold_out,cancelled',
             'type' => 'required|in:lokal,internasional',
         ]);
 
+        // FIX: Update Poster ke Cloudinary
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('konsers', 'public');
-            $validated['image'] = $path;
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'konsers'
+            ]);
+            $validated['image'] = $cloudinaryImage->getSecurePath();
         }
 
+        // FIX: Update Video Trailer ke Cloudinary
         if ($request->hasFile('trailer')) {
-            $path = $request->file('trailer')->store('konsers/trailers', 'public');
-            $validated['trailer'] = $path;
+            $cloudinaryVideo = Cloudinary::upload($request->file('trailer')->getRealPath(), [
+                'folder' => 'konsers/trailers',
+                'resource_type' => 'video'
+            ]);
+            $validated['trailer'] = $cloudinaryVideo->getSecurePath();
         }
-
-        // dd($validated); // Debugging line to inspect the validated data
 
         $konser->update($validated);
 
@@ -201,9 +219,8 @@ class KonserController extends Controller
     {
         $konser->delete();
 
-        return response()->json([
-            'message' => 'Konser berhasil dihapus'
-        ]);
+        // FIX: Kembalikan ke redirect halaman admin, bukan response JSON
+        return redirect('/admin')->with('success', 'Konser berhasil dihapus!');
     }
 
     /**

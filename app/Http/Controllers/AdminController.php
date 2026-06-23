@@ -17,15 +17,21 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // Middleware 'check.admin' sudah menangani verifikasi login & role admin
-        $artists = Artist::all();
+        // 1. OPTIMISASI: Load data Artist beserta jumlah konsernya langsung dari query
+        // (Asumsi: nama relasi di model Artist adalah 'konsers' atau 'konser'. Jika berbeda, sesuaikan namanya)
+        $artists = Artist::withCount('konsers')->get();
+
         $konser = Konser::all();
         $tickets = Ticket::all();
         $users = User::all();
+
+        // 2. OPTIMISASI: Jika di halaman admin nanti menampilkan detail transaksi beserta nama User / nama Tiket,
+        // sebaiknya gunakan eager loading 'with' agar query ke database tidak berulang-ulang (N+1 Query).
+        // Contoh: Transaksi::with(['user', 'ticket'])->get();
         $transaksi = Transaksi::all();
 
-        // Hitung total pendapatan dari pembelian tiket
-        $totalPendapatan = Transaksi::sum('total_price');
+        // 3. OPTIMISASI: Beri fallback ?? 0. Jika tabel transaksi masih kosong, nilainya tidak null melainkan 0.
+        $totalPendapatan = Transaksi::sum('total_price') ?? 0;
 
         // Lempar data ke view admin.blade.php
         return view('admin', compact('artists', 'konser', 'tickets', 'users', 'transaksi', 'totalPendapatan'));

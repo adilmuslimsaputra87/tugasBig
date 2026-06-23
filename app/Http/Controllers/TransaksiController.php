@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Traits\ApiResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // <-- Tambahkan ini untuk handle validasi tanggal promo
 
 class TransaksiController extends Controller
 {
@@ -51,69 +52,75 @@ class TransaksiController extends Controller
      * Save transaction (Form-based and API)
      */
     public function simpanTransaksi(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'ticket_id'         => 'required|exists:tickets,id',
-            'nama_depan'        => 'required|string|max:255',
-            'nama_belakang'     => 'required|string|max:255',
-            'email'             => 'required|email|max:255',
-            'nomor_hp'          => 'required|string|max:20',
-            'nik'               => 'nullable|string|max:20',
-            'quantity'          => 'required|integer|min:1',
-            'metode_pembayaran' => 'required|in:bca,gopay,qris',
-            'kode_promo'        => 'nullable|string|max:50',
-        ]);
+    {
+        try {
+            $validated = $request->validate([
+                'ticket_id'         => 'required|exists:tickets,id',
+                'nama_depan'        => 'required|string|max:255',
+                'nama_belakang'     => 'required|string|max:255',
+                'email'             => 'required|email|max:255',
+                'nomor_hp'          => 'required|string|max:20',
+                'nik'               => 'nullable|string|max:20',
+                'quantity'          => 'required|integer|min:1',
+                'metode_pembayaran' => 'required|in:bca,gopay,qris',
+                'kode_promo'        => 'nullable|string|max:50',
+            ]);
 
-        // Gunakan DB Transaction agar jika salah satu proses gagal, database dibatalkan otomatis
-        $transaction = DB::transaction(function () use ($validated) {
+            // Gunakan DB Transaction agar jika salah satu proses gagal, database dibatalkan otomatis
+            $transaction = DB::transaction(function () use ($validated) {
 
-            // 1. Ambil data tiket dan KUNCI baris database (lockForUpdate) untuk menghindari race condition
-            $ticket = Ticket::lockForUpdate()->findOrFail($validated['ticket_id']);
+                // 1. Ambil data tiket dan KUNCI baris database (lockForUpdate)
+                $ticket = Ticket::lockForUpdate()->findOrFail($validated['ticket_id']);
 
-            // 2. Cek apakah sisa stok saat ini mencukupi kuantitas pembelian
-            if ($ticket->stock < $validated['quantity']) {
-                throw new \Exception('Maaf, stok tiket tidak mencukupi atau sudah habis.');
+                // 2. Cek apakah sisa stok saat ini mencukupi kuantitas pembelian
+                if ($ticket->stock < $validated['quantity']) {
+                    throw new \Exception('Maaf, stok tiket tidak mencukupi atau sudah habis.');
+                }
+
+                // FIX BUG 2: Cek apakah tiket sedang dalam masa promo yang valid
+                $hargaAktif = $ticket->price;
+                if ($ticket->promo_price && (!$ticket->promo_valid_until || Carbon::now()->lte(Carbon::parse($ticket->promo_valid_until)))) {
+                    $hargaAktif = $ticket->promo_price;
+                }
+
+                // 3. Hitung total harga menggunakan harga yang aktif (normal / promo)
+                $totalPrice = ($hargaAktif * $validated['quantity']) + 10000;
+
+                // 4. Kurangi stok tiket di database saat ini juga
+                $ticket->decrement('stock', $validated['quantity']);
+
+                // 5. Simpan data transaksi ke database
+                return Transaksi::create([
+                    'users_id'       => Auth::id(), // Konsisten pakai Auth::id()
+                    'tickets_id'     => $validated['ticket_id'],
+                    'first_name'     => $validated['nama_depan'],
+                    'last_name'      => $validated['nama_belakang'],
+                    'email'          => $validated['email'],
+                    'phone_number'   => $validated['nomor_hp'],
+                    'nik'            => $validated['nik'],
+                    'quantity'       => $validated['quantity'],
+                    'total_price'    => $totalPrice,
+                    'payment_method' => $validated['metode_pembayaran'],
+                    'payment_status' => 'pending',
+                    'sold'           => true,
+                    'payment_date'   => Carbon::now(),
+                ]);
+            });
+
+            // Return JSON jika request berupa API
+            if ($request->expectsJson()) {
+                return $this->apiSuccess($transaction->load('ticket.konser'), 'Transaksi berhasil disimpan', 201);
             }
 
-            // 3. Hitung total harga
-            $totalPrice = ($ticket->price * $validated['quantity']) + 10000;
+            return redirect('/dashboard')->with('success', 'Transaksi berhasil disimpan');
 
-            // 4. Kurangi stok tiket di database saat ini juga
-            $ticket->decrement('stock', $validated['quantity']);
-
-            // 5. Simpan data transaksi ke database
-            return Transaksi::create([
-                'users_id'       => auth()->id(),
-                'tickets_id'     => $validated['ticket_id'],
-                'first_name'     => $validated['nama_depan'],
-                'last_name'      => $validated['nama_belakang'],
-                'email'          => $validated['email'],
-                'phone_number'   => $validated['nomor_hp'],
-                'nik'            => $validated['nik'],
-                'quantity'       => $validated['quantity'],
-                'total_price'    => $totalPrice,
-                'payment_method' => $validated['metode_pembayaran'],
-                'payment_status' => 'pending',
-                'sold'           => true, // Sudah pasti true karena stok lolos validasi di atas
-                'payment_date'   => now(),
-            ]);
-        });
-
-        // Return JSON jika request berupa API
-        if ($request->expectsJson()) {
-            return $this->apiSuccess($transaction->load('ticket.konser'), 'Transaksi berhasil disimpan', 201);
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return $this->apiError('Gagal menyimpan transaksi: ' . $e->getMessage(), 422);
+            }
+            return back()->with('error', $e->getMessage())->withInput();
         }
-
-        return redirect('/dashboard')->with('success', 'Transaksi berhasil disimpan');
-
-    } catch (\Exception $e) {
-        if ($request->expectsJson()) {
-            return $this->apiError('Gagal menyimpan transaksi: ' . $e->getMessage(), 422);
-        }
-        return back()->with('error', $e->getMessage())->withInput();
     }
-}
 
     /**
      * Update transaction status via REST API (admin only)
@@ -121,11 +128,40 @@ class TransaksiController extends Controller
     public function updateApi(Request $request, Transaksi $transaksi)
     {
         try {
+            // FIX BUG 3: Proteksi defense-in-depth khusus Admin
+            if (!Auth::check() || Auth::user()->role !== 'admin') {
+                return $this->apiError('Unauthorized: Admin access required', 403);
+            }
+
             $validated = $request->validate([
                 'payment_status' => 'required|in:pending,confirmed,rejected',
             ]);
 
-            $transaksi->update($validated);
+            // FIX BUG 1: DB Transaction untuk pengembalian stok jika status berubah jadi 'rejected'
+            DB::transaction(function () use ($transaksi, $validated) {
+                $statusLama = $transaksi->payment_status;
+                $statusBaru = $validated['payment_status'];
+
+                // Jika status berubah dari TIDAK rejected menjadi REJECTED, kembalikan stok tiket
+                if ($statusLama !== 'rejected' && $statusBaru === 'rejected') {
+                    $ticket = Ticket::lockForUpdate()->find($transaksi->tickets_id);
+                    if ($ticket) {
+                        $ticket->increment('stock', $transaksi->quantity);
+                    }
+                }
+                // Antisipasi jika admin salah klik (dari rejected mau dibalikin ke confirmed/pending lagi)
+                // Stok harus dikurangi kembali setelah memastikan stoknya masih tersedia
+                elseif ($statusLama === 'rejected' && $statusBaru !== 'rejected') {
+                    $ticket = Ticket::lockForUpdate()->find($transaksi->tickets_id);
+                    if ($ticket && $ticket->stock >= $transaksi->quantity) {
+                        $ticket->decrement('stock', $transaksi->quantity);
+                    } else {
+                        throw new \Exception('Gagal mengubah status. Stok tiket saat ini sudah tidak mencukupi untuk memulihkan transaksi.');
+                    }
+                }
+
+                $transaksi->update($validated);
+            });
 
             return $this->apiSuccess($transaksi->load('ticket.konser'), 'Status transaksi berhasil diperbarui', 200);
         } catch (\Exception $e) {

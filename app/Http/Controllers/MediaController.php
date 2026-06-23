@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Media;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\ApiResponse;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; // <-- PASTIKAN IMPORT INI ADA
 
 class MediaController extends Controller
 {
@@ -42,7 +43,7 @@ class MediaController extends Controller
                     'id'       => $m->id,
                     'name'     => $m->name,
                     'location' => $m->location,
-                    'image'      => $m->image ? asset('storage/' . $m->image) : null,
+                    'image'    => $m->image, // FIX: Langsung keluarkan URL Cloudinary-nya
                 ];
             });
 
@@ -56,8 +57,6 @@ class MediaController extends Controller
 
     public function store(Request $request)
     {
-        // ✅ AUTHORIZATION: Only admins can create media (middleware handles this)
-        // Double-check in controller for defense-in-depth
         if (!Auth::check() || Auth::user()->role !== 'admin') {
             return back()->withError('Unauthorized: Admin access required');
         }
@@ -72,9 +71,12 @@ class MediaController extends Controller
         $media->name = $request->name;
         $media->location = $request->location;
 
+        // FIX: Upload gambar media ke Cloudinary
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('media_images', 'public');
-            $media->image = $imagePath;
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'media_images'
+            ]);
+            $media->image = $cloudinaryImage->getSecurePath();
         }
 
         $media->save();
@@ -84,7 +86,6 @@ class MediaController extends Controller
 
     public function editMedia(Media $media)
     {
-        // ✅ AUTHORIZATION: Only admins can edit media
         if (!Auth::check() || Auth::user()->role !== 'admin') {
             return back()->withError('Unauthorized: Admin access required');
         }
@@ -94,7 +95,6 @@ class MediaController extends Controller
 
     public function simpanEditMedia(Request $request, Media $media)
     {
-        // ✅ AUTHORIZATION: Only admins can update media
         if (!Auth::check() || Auth::user()->role !== 'admin') {
             return back()->withError('Unauthorized: Admin access required');
         }
@@ -108,13 +108,12 @@ class MediaController extends Controller
         $media->name = $request->name;
         $media->location = $request->location;
 
+        // FIX: Update gambar media ke Cloudinary
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($media->image) {
-                \Storage::disk('public')->delete($media->image);
-            }
-            $imagePath = $request->file('image')->store('media_images', 'public');
-            $media->image = $imagePath;
+            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'media_images'
+            ]);
+            $media->image = $cloudinaryImage->getSecurePath();
         }
 
         $media->save();
@@ -124,15 +123,11 @@ class MediaController extends Controller
 
     public function destroy(Media $media)
     {
-        // ✅ AUTHORIZATION: Only admins can delete media
         if (!Auth::check() || Auth::user()->role !== 'admin') {
             return back()->withError('Unauthorized: Admin access required');
         }
 
-        if ($media->image) {
-            \Storage::disk('public')->delete($media->image);
-        }
-
+        // FIX: Hapus Storage::delete lokal, karena image sekarang berisi link URL Cloudinary
         $media->delete();
 
         return redirect()->route('admin.dashboard')->with('success', 'Media berhasil dihapus!');
@@ -142,15 +137,11 @@ class MediaController extends Controller
     public function destroyApi(Media $media)
     {
         try {
-            // ✅ AUTHORIZATION: Routes middleware already checks admin, but verify here too
             if (!Auth::check() || Auth::user()->role !== 'admin') {
                 return $this->apiError('Unauthorized: Admin access required', 403);
             }
 
-            if ($media->image) {
-                \Storage::disk('public')->delete($media->image);
-            }
-
+            // FIX: Hapus Storage::delete lokal
             $media->delete();
 
             return $this->apiSuccess(null, 'Media berhasil dihapus', 200);
@@ -170,6 +161,7 @@ class MediaController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'location' => 'required|string|max:255',
+                'image' => 'nullable|string', // FIX: Izinkan API mengirim update link gambar
             ]);
 
             $media->update($validated);
@@ -179,6 +171,4 @@ class MediaController extends Controller
             return $this->apiError('Gagal memperbarui media: ' . $e->getMessage(), 422);
         }
     }
-
 }
-

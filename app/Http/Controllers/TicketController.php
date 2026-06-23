@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use App\Models\Konser;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
+
 class TicketController extends Controller
 {
     use ApiResponse;
@@ -24,6 +25,9 @@ class TicketController extends Controller
 
     public function store(Request $request)
     {
+        // Panggil helper pembersih titik harga
+        $this->cleanPriceInputs($request);
+
         $validated = $request->validate([
             'konser_id' => 'required|exists:konsers,id',
             'name' => 'required|string|max:255',
@@ -46,6 +50,8 @@ class TicketController extends Controller
     public function storeApi(Request $request)
     {
         try {
+            $this->cleanPriceInputs($request);
+
             $validated = $request->validate([
                 'konser_id' => 'required|exists:konsers,id',
                 'name' => 'required|string|max:255',
@@ -72,12 +78,15 @@ class TicketController extends Controller
 
     public function edit(Ticket $ticket)
     {
-        $konsers = Konser::all();
+        // FIX: Samakan dengan create(), eager load artist-nya
+        $konsers = Konser::with('artist')->get();
         return view('admin.tickets.edit', compact('ticket', 'konsers'));
     }
 
     public function update(Request $request, Ticket $ticket)
     {
+        $this->cleanPriceInputs($request);
+
         $validated = $request->validate([
             'konser_id' => 'required|exists:konsers,id',
             'name' => 'required|string|max:255',
@@ -100,6 +109,8 @@ class TicketController extends Controller
     public function updateApi(Request $request, Ticket $ticket)
     {
         try {
+            $this->cleanPriceInputs($request);
+
             $validated = $request->validate([
                 'konser_id' => 'required|exists:konsers,id',
                 'name' => 'required|string|max:255',
@@ -121,7 +132,7 @@ class TicketController extends Controller
 
     public function destroy(Ticket $ticket)
     {
-        $ticket = Ticket::findOrFail($ticket->id);
+        // FIX: Hapus baris findOrFail yang redundan. Langsung tembak delete.
         $ticket->delete();
         return redirect('/admin')->with('success', 'Tiket ' . $ticket->name . ' berhasil dihapus!');
     }
@@ -161,5 +172,23 @@ class TicketController extends Controller
     public function getHarga($konserID)
     {
         return $this->getByKonser($konserID);
+    }
+
+    // =========================================================================
+    // HELPER METHODS
+    // =========================================================================
+
+    /**
+     * Membersihkan format titik pada input harga & harga promo
+     */
+    private function cleanPriceInputs(Request $request): void
+    {
+        if ($request->filled('price')) {
+            $request->merge(['price' => str_replace('.', '', $request->price)]);
+        }
+
+        if ($request->filled('promo_price')) {
+            $request->merge(['promo_price' => str_replace('.', '', $request->promo_price)]);
+        }
     }
 }

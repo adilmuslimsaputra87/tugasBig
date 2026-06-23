@@ -17,21 +17,19 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // 1. OPTIMISASI: Load data Artist beserta jumlah konsernya langsung dari query
-        // (Asumsi: nama relasi di model Artist adalah 'konsers' atau 'konser'. Jika berbeda, sesuaikan namanya)
+        // 1. FIX RELASI: Menghitung jumlah konser per artis lewat relasi 'konsers'
+        // Jika di model Artist fungsinya bernama 'konser' (singular), ubah menjadi 'konser'
         $artists = Artist::withCount('konsers')->get();
 
         $konser = Konser::all();
         $tickets = Ticket::all();
         $users = User::all();
 
-        // 2. OPTIMISASI: Jika di halaman admin nanti menampilkan detail transaksi beserta nama User / nama Tiket,
-        // sebaiknya gunakan eager loading 'with' agar query ke database tidak berulang-ulang (N+1 Query).
-        // Contoh: Transaksi::with(['user', 'ticket'])->get();
-        $transaksi = Transaksi::all();
+        // 2. OPTIMISASI N+1: Ambil data transaksi sekaligus data user & tiket terkait dalam 1 query
+        $transaksi = Transaksi::with(['user', 'ticket'])->get();
 
-        // 3. OPTIMISASI: Beri fallback ?? 0. Jika tabel transaksi masih kosong, nilainya tidak null melainkan 0.
-        $totalPendapatan = Transaksi::sum('total_price') ?? 0;
+        // 3. FIX LOGIKA BISNIS: Pendapatan hanya dihitung dari transaksi yang BENAR-BENAR lunas ('confirmed')
+        $totalPendapatan = Transaksi::where('payment_status', 'confirmed')->sum('total_price') ?? 0;
 
         // Lempar data ke view admin.blade.php
         return view('admin', compact('artists', 'konser', 'tickets', 'users', 'transaksi', 'totalPendapatan'));
@@ -49,7 +47,10 @@ class AdminController extends Controller
             'total_users' => User::where('role', 'user')->count(),
             'total_admins' => User::where('role', 'admin')->count(),
             'total_transactions' => Transaksi::count(),
-            'total_revenue' => Transaksi::sum('total_price') ?? 0,
+
+            // FIX LOGIKA BISNIS: Sinkronisasi revenue API hanya dari transaksi lunas
+            'total_revenue' => Transaksi::where('payment_status', 'confirmed')->sum('total_price') ?? 0,
+
             'pending_payments' => Transaksi::where('payment_status', 'pending')->count(),
             'confirmed_payments' => Transaksi::where('payment_status', 'confirmed')->count(),
         ];

@@ -247,7 +247,65 @@
                                 </div>
                             </div>
                         </div>
-                        <table class="admin-table" id="admin-concerts-table"></table>
+                        <table class="admin-table" id="admin-concerts-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Poster</th>
+            <th>Konser</th>
+            <th>Artis</th>
+            <th>Tanggal</th>
+            <th>Kota</th>
+            <th>Harga</th>
+            <th>Status</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($konsers as $k)
+            <tr>
+                <td>{{ $loop->iteration }}</td>
+                
+                <td>
+                    <img class="concert-thumb" 
+                         src="{{ $k->image ? Storage::disk('supabase')->url($k->image) : asset('img/konsers.jpg') }}" 
+                         alt="{{ $k->title }}" 
+                         style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;">
+                </td>
+                
+                <td><div class="td-name">{{ $k->title }}</div></td>
+                
+                <td class="td-artist">{{ $k->artists->name ?? "Artis Tidak Tersedia" }}</td>
+                
+                <td style="font-size:13px;">{{ \Carbon\Carbon::parse($k->date)->format('d M Y') }}</td>
+                
+                <td>{{ $k->city }}</td>
+                
+                <td>Rp {{ number_format($k->price, 0, ',', '.') }}</td>
+                
+                <td>
+                    <span class="status-badge 
+                        {{ $k->status === 'published' || $k->status === 'on-sale' ? 'status-on-sale' : 'status-sold-out' }}">
+                        {{ strtoupper(str_replace('_', ' ', $k->status)) }}
+                    </span>
+                </td>
+                
+                <td>
+                    <div class="td-actions">
+                        <a class="btn-edit" href="/admin/konsers/{{ $k->id }}/edit"><i class="fas fa-edit"></i></a>
+                        <button class="btn-del" onclick="deleteConcert({{ $k->id }}, this)"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="9" style="text-align:center; padding:30px; color:var(--gray);">
+                    Tidak ada data konser saat ini.
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
+                        </table>
                     </div>
                 </div>
 

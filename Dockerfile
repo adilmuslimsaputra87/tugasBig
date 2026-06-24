@@ -8,6 +8,11 @@ RUN apt-get update && apt-get install -y \
     git \
     && docker-php-ext-install pdo pdo_mysql zip
 
+# Instal dependensi sistem untuk PostgreSQL
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql
+
 # Paksa hanya satu MPM
 RUN a2dismod mpm_event || true
 RUN a2dismod mpm_worker || true

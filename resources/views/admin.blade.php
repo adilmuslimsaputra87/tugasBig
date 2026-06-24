@@ -268,7 +268,7 @@
                 
                 <td>
                     <img class="concert-thumb" 
-                         src="{{ $k->image ? Storage::disk('supabase')->url($k->image) : asset('img/konsers.jpg') }}" 
+                         src="{{ $k->image ? $k->image : asset('img/konsers.jpg') }}" 
                          alt="{{ $k->title }}" 
                          style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;">
                 </td>

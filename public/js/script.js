@@ -1253,7 +1253,7 @@ function buildAdminDashboard() {
 }
 
 function buildConcertsTable() {
-    const t = document.getElementById("admin-concerts-table");
+    const t = document.getElementById("admin-concerts-tabled");
     if (!t) return;
 
     // Perbaikan struktur: Bungkus dengan <tbody> agar layout tabel tidak rusak saat memuat data

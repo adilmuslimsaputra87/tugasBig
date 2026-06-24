@@ -1278,7 +1278,7 @@ function buildConcertsTable() {
                 return `
                 <tr>
                   <td>${i + 1}</td>
-                  <td><img class="concert-thumb" src="${imgSrc}" alt="${c.title}" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;"></td>
+                  <td></td>
                   <td><div class="td-name">${c.title}</div></td>
                   <td class="td-artist">${c.artist}</td>
                   <td style="font-size:13px;">${c.date}</td>

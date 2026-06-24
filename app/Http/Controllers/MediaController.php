@@ -5,25 +5,27 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Media;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk handle Storage
 use App\Traits\ApiResponse;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; // <-- PASTIKAN IMPORT INI ADA
 
 class MediaController extends Controller
 {
     use ApiResponse;
 
-    // ✅ SECURITY FIX: Add middleware check in constructor
     public function __construct()
     {
         // All media endpoints require admin authorization
-        // (routes/web.php already has 'check.admin' middleware for these routes)
     }
 
     public function showApi(Media $media)
     {
-        // ✅ AUTHORIZATION: Only authenticated users can view media
         if (!Auth::check()) {
             return $this->apiError('Unauthorized: Authentication required', 401);
+        }
+
+        // Return URL Supabase Storage di API Single View jika dibutuhkan
+        if ($media->image) {
+            $media->image_url = Storage::url($media->image);
         }
 
         return response()->json($media);
@@ -31,7 +33,6 @@ class MediaController extends Controller
 
     public function indexApi()
     {
-        // ✅ AUTHORIZATION: Check if user is authenticated
         if (!Auth::check()) {
             return $this->apiError('Unauthorized: Authentication required', 401);
         }
@@ -43,7 +44,8 @@ class MediaController extends Controller
                     'id'       => $m->id,
                     'name'     => $m->name,
                     'location' => $m->location,
-                    'image'    => $m->image, // FIX: Langsung keluarkan URL Cloudinary-nya
+                    // ✅ FIX: Gunakan Storage::url() untuk mendapatkan link publik dari Supabase
+                    'image'    => $m->image ? Storage::url($m->image) : null,
                 ];
             });
 
@@ -71,12 +73,12 @@ class MediaController extends Controller
         $media->name = $request->name;
         $media->location = $request->location;
 
-        // FIX: Upload gambar media ke Cloudinary
         if ($request->hasFile('image')) {
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'media_images'
-            ]);
-            $media->image = $cloudinaryImage->getSecurePath();
+            // ✅ FIX: Upload langsung ke folder 'media_images' di Supabase Storage
+            // Jika di .env FILESYSTEM_DISK=supabase, cukup store('media_images')
+            // Di bawah ini ditulis eksplisit agar aman terarah ke disk supabase
+            $imagePath = $request->file('image')->store('media_images', 'supabase');
+            $media->image = $imagePath; // Menyimpan path: "media_images/nama_file.jpg"
         }
 
         $media->save();
@@ -108,12 +110,14 @@ class MediaController extends Controller
         $media->name = $request->name;
         $media->location = $request->location;
 
-        // FIX: Update gambar media ke Cloudinary
         if ($request->hasFile('image')) {
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'media_images'
-            ]);
-            $media->image = $cloudinaryImage->getSecurePath();
+            // ✅ FIX: Hapus gambar lama dari cloud Supabase Storage jika ada
+            if ($media->image) {
+                Storage::disk('supabase')->delete($media->image);
+            }
+            // Upload gambar baru ke Supabase
+            $imagePath = $request->file('image')->store('media_images', 'supabase');
+            $media->image = $imagePath;
         }
 
         $media->save();
@@ -127,13 +131,17 @@ class MediaController extends Controller
             return back()->withError('Unauthorized: Admin access required');
         }
 
-        // FIX: Hapus Storage::delete lokal, karena image sekarang berisi link URL Cloudinary
+        // ✅ FIX: Hapus file dari Supabase Storage sebelum hapus baris database
+        if ($media->image) {
+            Storage::disk('supabase')->delete($media->image);
+        }
+
         $media->delete();
 
         return redirect()->route('admin.dashboard')->with('success', 'Media berhasil dihapus!');
     }
 
-    // ✅ API: DELETE via REST API with proper authorization
+    // ✅ API: DELETE via REST API
     public function destroyApi(Media $media)
     {
         try {
@@ -141,7 +149,11 @@ class MediaController extends Controller
                 return $this->apiError('Unauthorized: Admin access required', 403);
             }
 
-            // FIX: Hapus Storage::delete lokal
+            // ✅ FIX: Hapus file dari Supabase Storage
+            if ($media->image) {
+                Storage::disk('supabase')->delete($media->image);
+            }
+
             $media->delete();
 
             return $this->apiSuccess(null, 'Media berhasil dihapus', 200);
@@ -150,7 +162,7 @@ class MediaController extends Controller
         }
     }
 
-    // ✅ API: UPDATE via REST API with proper authorization
+    // ✅ API: UPDATE via REST API
     public function updateApi(Request $request, Media $media)
     {
         try {
@@ -161,7 +173,6 @@ class MediaController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'location' => 'required|string|max:255',
-                'image' => 'nullable|string', // FIX: Izinkan API mengirim update link gambar
             ]);
 
             $media->update($validated);

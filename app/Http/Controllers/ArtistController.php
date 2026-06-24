@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Artist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Traits\ApiResponse;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ArtistController extends Controller
 {
@@ -13,7 +13,13 @@ class ArtistController extends Controller
 
     public function index()
     {
-        $artists = Artist::all();
+        $artists = Artist::withCount('konsers')->get()->map(function (Artist $artist) {
+            return array_merge($artist->toArray(), [
+                'image_url' => $this->resolveSupabaseUrl($artist->image),
+                'concerts_count' => $artist->konsers_count ?? 0,
+            ]);
+        });
+
         return response()->json($artists);
     }
 
@@ -28,18 +34,14 @@ class ArtistController extends Controller
             'name' => 'required|string|max:255',
             'genre' => 'nullable|string|max:100',
             'country' => 'required|in:indonesia,internasional',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'bio' => 'nullable|string',
             'instagram' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('image')) {
-            // Upload ke Cloudinary dan masukkan ke folder 'artists'
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'artists'
-            ]);
-            // Ambil URL secure https
-            $validated['image'] = $cloudinaryImage->getSecurePath();
+            $path = $request->file('image')->store('artists','supabase');
+            $validated['image'] = $path;
         }
 
         $artist = Artist::create($validated);
@@ -57,7 +59,7 @@ class ArtistController extends Controller
                 'name' => 'required|string|max:255',
                 'genre' => 'nullable|string|max:100',
                 'country' => 'required|in:indonesia,internasional',
-                'image' => 'nullable|string', // API menerima string/URL langsung
+                'image' => 'nullable|string',
                 'bio' => 'nullable|string',
                 'instagram' => 'nullable|string|max:100',
             ]);
@@ -92,11 +94,8 @@ class ArtistController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // FIX: Sekarang proses update juga upload langsung ke Cloudinary
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'artists'
-            ]);
-            $validated['image'] = $cloudinaryImage->getSecurePath();
+            $path = $request->file('image')->store('artists', 'supabase');
+            $validated['image'] = $path;
         }
 
         $artist->update($validated);
@@ -145,6 +144,25 @@ class ArtistController extends Controller
             return $this->apiSuccess(null, 'Artis berhasil dihapus', 200);
         } catch (\Exception $e) {
             return $this->apiError('Gagal menghapus artis: ' . $e->getMessage(), 422);
+        }
+    }
+
+    private function resolveSupabaseUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '' || $path === '0') {
+            return null;
+        }
+
+        try {
+            if (! Storage::disk('supabase')->fileExists($path)) {
+                return null;
+            }
+
+            return Storage::disk('supabase')->url($path);
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 }

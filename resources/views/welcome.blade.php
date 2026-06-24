@@ -419,7 +419,7 @@
                                 <div class="history-item"
                                     onclick="navigate('detail-transaksi', '{{ $order->id }}')">
 
-                                    <img class="history-img" src="{{ asset('storage/' . $konser->image) }}"
+                                    <img class="history-img" src="{{ $konser->image ? Storage::disk('supabase')->url($konser->image) : asset('img/default-poster.jpg') }}"
                                         alt="{{ $konser->title }}">
 
                                     <div>

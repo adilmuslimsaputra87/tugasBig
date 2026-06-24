@@ -32,7 +32,7 @@
             $checkoutMeta = 'Date · Venue';
         }
         $checkoutCat = $ticket ? $ticket->name . ' × ' . ($qty ?? 1) : '';
-        $checkoutImg = $ticket?->konser?->image ? '/storage/' . $ticket->konser->image : '';
+        $checkoutImg = $ticket?->konser?->image ? Storage::disk('supabase')->url($ticket->konser->image) : asset('img/default-poster.jpg');
         $checkoutTotal = $ticketPrice * ($qty ?? 1) + 10000;
         @endphp
         <div class="page active" id="page-checkout">

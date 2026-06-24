@@ -42,6 +42,35 @@ async function apiFetch(url, options = {}) {
     return response.json();
 }
 
+function resolveImageSrc(src, fallback = "/images/default-poster.png") {
+    if (!src || src === "0") {
+        return `${window.location.origin}${fallback}`;
+    }
+
+    if (typeof src !== "string") {
+        return `${window.location.origin}${fallback}`;
+    }
+
+    const trimmed = src.trim();
+
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        return trimmed;
+    }
+
+    if (trimmed.startsWith("//")) {
+        return `${window.location.protocol}${trimmed}`;
+    }
+
+    let normalized = trimmed;
+    if (normalized.startsWith("/storage/")) {
+        normalized = normalized.slice(9);
+    } else if (normalized.startsWith("storage/")) {
+        normalized = normalized.slice(8);
+    }
+
+    return `${window.location.origin}/storage/${normalized}`;
+}
+
 // ====== AUTH ======
 function openModal(type) {
     if (type === "login" || type === "register") {
@@ -199,20 +228,16 @@ async function loadKonsersFromAPI() {
                 day: "numeric",
             }),
             time: k.time ? k.time.substring(0, 5) + " WIB" : "19.00 WIB",
-            img:
-                k.image ||
+            img: k.image_url ||
                 "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
-            trailer:
-                k.trailer ||
-                "tidak ada vid",
+            trailer: k.trailer || "tidak ada vid",
             price: parseInt(k.price) || 0,
             type: k.type || "lokal",
-            status:
-                k.status === "published"
-                    ? "on-sale"
-                    : k.status === "sold_out"
-                        ? "sold-out"
-                        : k.status || "on-sale",
+            status: k.status === "published"
+                ? "on-sale"
+                : k.status === "sold_out"
+                    ? "sold-out"
+                    : k.status || "on-sale",
             desc: k.description || "",
             bg: k.type === "internasional" ? "internasional" : "indonesia",
         }));
@@ -376,11 +401,10 @@ async function loadArtistsFromAPI() {
             id: a.id,
             name: a.name,
             genre: a.genre || "Pop",
-            img:
-                a.image ||
+            img: a.image_url ||
                 "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80",
             concerts: a.concerts_count || 0,
-            country: a.origin || "indonesia",
+            country: a.country || "indonesia",
             bio: a.bio || "",
             instagram: a.instagram || "",
         }));
@@ -656,7 +680,7 @@ function concertCardHTML(c, i) {
     data-price="${c.price || 0}"
     data-aos style="animation-delay:${i * 0.08}s">
     <div class="concert-card-img">
-      <img src="/storage/${c.img}" alt="${c.artist}" loading="lazy">
+      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist}" loading="lazy">
       <div class="concert-card-overlay"></div>
       ${badge}
       <div class="concert-card-wishlist" onclick="event.stopPropagation();toggleWishlist(this)"><i class="fas fa-heart"></i></div>
@@ -704,7 +728,7 @@ function renderHomeConcerts() {
                 .map(
                     (ar) => `
         <div class="artist-card" onclick="navigate('artists')">
-          <img class="artist-card-img" src="/storage/${ar.img}" alt="${ar.name}">
+          <img class="artist-card-img" src="${resolveImageSrc(ar.img, '/images/default-poster.png')}" alt="${ar.name}">
           <div class="artist-card-name">${ar.name}</div>
           <div class="artist-card-genre">${ar.genre}</div>
         </div>`,
@@ -722,7 +746,7 @@ function renderHeroFeatured(concerts) {
         .map(
             (c) => `
     <div class="hero-card-mini" onclick="openConcertDetail(${c.id})">
-      <img src="/storage/${c.img}" alt="${c.artist}">
+      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist}">
       <div class="hero-card-mini-info">
         <div class="hero-card-mini-artist">${c.artist}</div>
         <div class="hero-card-mini-date"><i class="fas fa-calendar-alt" style="color:var(--red);margin-right:4px;"></i>${c.date} · ${c.city}</div>
@@ -741,7 +765,7 @@ function renderVideoSection(concerts) {
         .map(
             (c) => `
     <div class="video-item" onclick="openConcertDetail(${c.id})">
-      <img src="/storage/${c.img}" alt="${c.artist} - ${c.title}">
+      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist} - ${c.title}">
       <div class="video-play-btn"><i class="fas fa-play"></i></div>
       <div class="video-item-info">
         <div class="video-item-title">${c.artist} — ${c.title}</div>
@@ -829,7 +853,7 @@ function openConcertDetail(id) {
         }
 
         // Konten utama detail konser
-        document.getElementById("detail-bg-img").src = "/storage/" + c.img;
+        document.getElementById("detail-bg-img").src = resolveImageSrc(c.img, '/images/default-poster.png');
         document.getElementById("detail-badge").textContent = c.genre.toUpperCase();
         document.getElementById("detail-title").textContent = c.title;
         document.getElementById("detail-artist").querySelector("span").textContent = c.artist;
@@ -853,9 +877,9 @@ function openConcertDetail(id) {
             .join("");
 
         // Konten media trailer di halaman detail
-        document.getElementById("detail-gallery-img").src = "/storage/" + c.img;
-        document.getElementById("detail-trailer").src = "/storage/" + c.trailer;
-        document.getElementById("video-source").src = "/storage/" + c.trailer;
+        document.getElementById("detail-gallery-img").src = resolveImageSrc(c.img, '/images/default-poster.png');
+        document.getElementById("detail-trailer").src = c.trailer_url || '';
+        document.getElementById("video-source").src = c.trailer_url || '';
         document.getElementById("detail-trailer-title").textContent = c.artist + " — Official Trailer";
 
         // 4. Load kategori tiket dari API secara dinamis
@@ -979,7 +1003,7 @@ function goCheckout() {
         const sub = unit * selectedQty;
         const total = sub + 10000;
 
-        if (checkoutImg) checkoutImg.src = "/storage/" + c.img;
+        if (checkoutImg) checkoutImg.src = resolveImageSrc(c.img, '/images/default-poster.png');
         if (checkoutTitle)
             checkoutTitle.textContent = c.artist + " — " + c.title;
         if (checkoutMeta) checkoutMeta.textContent = c.date + " · " + c.venue;
@@ -1016,18 +1040,18 @@ function filterArtists() {
             (a) =>
                 !search || a.name.toLowerCase().includes(search.toLowerCase()),
         );
-        g.innerHTML = filtered
-            .map(
-                (a) => `
-      <div class="artist-full-card">
-        <img class="artist-full-img" src="/storage/${a.img}" alt="${a.name}" loading="lazy">
-        <div class="artist-full-name">${a.name}</div>
-        <div class="artist-full-genre">${a.genre}</div>
-        <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
-        <button class="btn-book" style="margin-top:12px;" onclick="event.stopPropagation();navigate('concerts')">Lihat Konser</button>
-      </div>`,
-            )
-            .join("");
+                g.innerHTML = filtered
+                        .map(
+                                (a) => `
+            <div class="artist-full-card">
+                <img class="artist-full-img" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
+                <div class="artist-full-name">${a.name}</div>
+                <div class="artist-full-genre">${a.genre}</div>
+                <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
+                <button class="btn-book" style="margin-top:12px;" onclick="event.stopPropagation();navigate('concerts')">Lihat Konser</button>
+            </div>`,
+                        )
+                        .join("");
     });
 }
 
@@ -1042,18 +1066,18 @@ function setArtistFilter(val, btn) {
     loadArtistsFromAPI().then((artists) => {
         const filtered =
             val === "all" ? artists : artists.filter((a) => a.country === val);
-        g.innerHTML = filtered
-            .map(
-                (a) => `
-      <div class="artist-full-card">
-        <img class="artist-full-img" src="/storage/${a.img}" alt="${a.name}" loading="lazy">
-        <div class="artist-full-name">${a.name}</div>
-        <div class="artist-full-genre">${a.genre}</div>
-        <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
-        <button class="btn-book" style="margin-top:12px;" onclick="event.stopPropagation();navigate('concerts')">Lihat Konser</button>
-      </div>`,
-            )
-            .join("");
+                g.innerHTML = filtered
+                        .map(
+                                (a) => `
+            <div class="artist-full-card">
+                <img class="artist-full-img" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
+                <div class="artist-full-name">${a.name}</div>
+                <div class="artist-full-genre">${a.genre}</div>
+                <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
+                <button class="btn-book" style="margin-top:12px;" onclick="event.stopPropagation();navigate('concerts')">Lihat Konser</button>
+            </div>`,
+                        )
+                        .join("");
     });
 }
 
@@ -1078,7 +1102,7 @@ async function renderGallery() {
                 (k) => `
         <div data-id="${k.id}" style="break-inside:avoid;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:var(--transition);"
              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-          <img src="/storage/${k.img}" style="width:100%;display:block;" loading="lazy">
+          <img src="${resolveImageSrc(k.img, '/images/default-poster.png')}" style="width:100%;display:block;" loading="lazy">
         </div>`
             )
             .join("");
@@ -1187,7 +1211,7 @@ function buildAdminDashboard() {
                         (c, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><img class="concert-thumb" src="/storage/${c.img}" alt="" style="width:40px;height:40px;object-fit:cover;"></td>
+            <td><img class="concert-thumb" src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="" style="width:40px;height:40px;object-fit:cover;"></td>
             <td><div class="td-name">${c.title}</div></td>
             <td class="td-artist">${c.artist}</td>
             <td style="font-size:13px;">${c.date}</td>
@@ -1214,7 +1238,7 @@ function buildAdminDashboard() {
                         (a, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><img class="concert-thumb" src="/storage/${a.img}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
+            <td><img class="concert-thumb" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
             <td><div class="td-name">${a.name}</div></td>
             <td>${a.genre}</td>
         </tr>`,
@@ -1235,28 +1259,8 @@ function buildConcertsTable() {
 
     loadKonsersFromAPI()
         .then((konsersData) => {
-            // Ambil domain utama secara dinamis (localhost atau domain production Render)
-            const baseUrl = window.location.origin;
-
             const rows = konsersData.map((c, i) => {
-                // ==========================================
-                // FIX BUG GAMBAR: Deteksi tipe path gambar
-                // ==========================================
-                let imgSrc = c.img;
-
-                if (imgSrc && !imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
-                    // Antisipasi jika dari API sudah ada kata '/storage/' atau 'storage/'
-                    if (imgSrc.startsWith('/storage/')) {
-                        imgSrc = `${baseUrl}${imgSrc}`;
-                    } else if (imgSrc.startsWith('storage/')) {
-                        imgSrc = `${baseUrl}/${imgSrc}`;
-                    } else {
-                        imgSrc = `${baseUrl}/storage/${imgSrc}`;
-                    }
-                } else if (!imgSrc) {
-                    // Gambar cadangan jika datanya kosong/null
-                    imgSrc = `${baseUrl}/images/default-poster.png`;
-                }
+                const imgSrc = resolveImageSrc(c.img, '/images/default-poster.png');
 
                 return `
                 <tr>
@@ -1341,7 +1345,7 @@ async function buildArtistsTable() {
                     <tr>
                         <td>${i + 1}</td>
                         <td>
-                            <img class="concert-thumb" src="/storage/${a.img}" alt="${a.name}" style="border-radius:50%;width:40px;height:40px;object-fit:cover;">
+                            <img class="concert-thumb" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" style="border-radius:50%;width:40px;height:40px;object-fit:cover;">
                         </td>
                         <td><div class="td-name">${a.name}</div></td>
                         <td>${a.genre}</td>
@@ -1408,28 +1412,7 @@ function buildMediaTable() {
         const baseUrl = window.location.origin;
 
         const rows = media.map((m, index) => {
-            let finalImgUrl = "";
-
-            // FIX 2: Validasi berlapis untuk mendeteksi link luar vs file lokal vs data kosong/undefined
-            if (m.image && m.image !== "undefined" && m.image.trim() !== "") {
-                if (m.image.startsWith('http://') || m.image.startsWith('https://')) {
-                    // Jika data dari database sudah berupa link internet langsung
-                    finalImgUrl = m.image;
-                } else {
-                    // Jika data berupa path file lokal, rapihin prefix /storage/-nya
-                    if (m.image.startsWith('/storage/')) {
-                        finalImgUrl = `${baseUrl}${m.image}`;
-                    } else if (m.image.startsWith('storage/')) {
-                        finalImgUrl = `${baseUrl}/${m.image}`;
-                    } else {
-                        finalImgUrl = `${baseUrl}/storage/${m.image}`;
-                    }
-                }
-            } else {
-                // Fallback default image menggunakan domain absolut agar tidak nyasar di sub-url
-                finalImgUrl = `${baseUrl}/storage/img/artists.jpg`;
-            }
-
+            const finalImgUrl = resolveImageSrc(m.image, '/storage/img/artists.jpg');
             const gambarTag = `<img src="${finalImgUrl}" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`;
 
             return `

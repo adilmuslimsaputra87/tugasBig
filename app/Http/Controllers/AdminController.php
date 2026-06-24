@@ -17,19 +17,15 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // 1. FIX RELASI: Menghitung jumlah konser per artis lewat relasi 'konsers'
-        // Jika di model Artist fungsinya bernama 'konser' (singular), ubah menjadi 'konser'
-        $artists = Artist::withCount('konsers')->get();
-
+        // Middleware 'check.admin' sudah menangani verifikasi login & role admin
+        $artists = Artist::all();
         $konser = Konser::all();
         $tickets = Ticket::all();
         $users = User::all();
+        $transaksi = Transaksi::all();
 
-        // 2. OPTIMISASI N+1: Ambil data transaksi sekaligus data user & tiket terkait dalam 1 query
-        $transaksi = Transaksi::with(['user', 'ticket'])->get();
-
-        // 3. FIX LOGIKA BISNIS: Pendapatan hanya dihitung dari transaksi yang BENAR-BENAR lunas ('confirmed')
-        $totalPendapatan = Transaksi::where('payment_status', 'confirmed')->sum('total_price') ?? 0;
+        // Hitung total pendapatan dari pembelian tiket
+        $totalPendapatan = Transaksi::sum('total_price');
 
         // Lempar data ke view admin.blade.php
         return view('admin', compact('artists', 'konser', 'tickets', 'users', 'transaksi', 'totalPendapatan'));
@@ -47,10 +43,7 @@ class AdminController extends Controller
             'total_users' => User::where('role', 'user')->count(),
             'total_admins' => User::where('role', 'admin')->count(),
             'total_transactions' => Transaksi::count(),
-
-            // FIX LOGIKA BISNIS: Sinkronisasi revenue API hanya dari transaksi lunas
-            'total_revenue' => Transaksi::where('payment_status', 'confirmed')->sum('total_price') ?? 0,
-
+            'total_revenue' => Transaksi::sum('total_price') ?? 0,
             'pending_payments' => Transaksi::where('payment_status', 'pending')->count(),
             'confirmed_payments' => Transaksi::where('payment_status', 'confirmed')->count(),
         ];

@@ -30,6 +30,21 @@ return [
 
     'disks' => [
 
+        'supabase' => [
+            'driver' => 'supabase',
+            'key' => env('SUPABASE_KEY'),
+            'secret' => env('SUPABASE_URL'),
+            'region' => env('SUPABASE_REGION', 'us-east-1'),
+            'bucket' => 'primestage',
+            'endpoint' => env('SUPABASE_ENDPOINT') ?: (
+                str_ends_with(env('SUPABASE_URL', ''), '/rest/v1')
+                    ? substr(env('SUPABASE_URL'), 0, -strlen('/rest/v1'))
+                    : env('SUPABASE_URL')
+            ),
+            'public' => true,
+            'use_path_style_endpoint' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

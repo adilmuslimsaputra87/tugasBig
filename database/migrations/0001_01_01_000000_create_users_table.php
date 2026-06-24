@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->enum('role', ['user', 'admin'])->default('user');
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->string('name')->virtualAs("first_name || ' ' || last_name");
+            $table->string('name')->storedAs("first_name || ' ' || last_name");
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

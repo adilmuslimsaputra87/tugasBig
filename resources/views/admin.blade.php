@@ -303,7 +303,7 @@
                                         <td>{{ $index + 1 }}</td>
                                         <td>
                                             <img class="concert-thumb"
-                                                src="{{ $a->img ? asset('storage/' . $a->img) : asset('img/artists.jpg') }}"
+                                                src="{{ $a->image ? Storage::disk('supabase')->url($a->image) : asset('img/artists.jpg') }}"
                                                 alt="{{ $a->name }}"
                                                 style="border-radius:50%; width:40px; height:40px; object-fit:cover;">
                                         </td>

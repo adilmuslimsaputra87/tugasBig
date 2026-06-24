@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Konser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Artist;
 use App\Traits\ApiResponse;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; // <-- PASTIKAN IMPORT INI ADA
 
 class KonserController extends Controller
 {
@@ -17,7 +17,10 @@ class KonserController extends Controller
      */
     public function index()
     {
-        $konsers = Konser::with('artist')->get();
+        $konsers = Konser::with('artist')->get()->map(function (Konser $konser) {
+            return $this->formatKonserResponse($konser);
+        });
+
         return response()->json($konsers);
     }
 
@@ -54,23 +57,16 @@ class KonserController extends Controller
             'type' => 'required|in:lokal,internasional',
         ]);
 
-        // FIX: Upload Poster ke Cloudinary
         if ($request->hasFile('image')) {
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'konsers'
-            ]);
-            $validated['image'] = $cloudinaryImage->getSecurePath();
+            $path = $request->file('image')->store('konsers/img');
+            $validated['image'] = $path;
         }
 
-        // FIX: Upload Video Trailer ke Cloudinary
         if ($request->hasFile('trailer')) {
-            $cloudinaryVideo = Cloudinary::upload($request->file('trailer')->getRealPath(), [
-                'folder' => 'konsers/trailers',
-                'resource_type' => 'video' // Wajib ditambahkan khusus untuk file video
-            ]);
-            $validated['trailer'] = $cloudinaryVideo->getSecurePath();
+            $path = $request->file('trailer')->store('konsers/trailers');
+            $validated['trailer'] = $path;
         }
-
+// dd($validated);
         $konser = Konser::create($validated);
 
         return redirect('/admin')->with('success', 'Konser berhasil ditambahkan!');
@@ -101,7 +97,8 @@ class KonserController extends Controller
                 'capacity' => 'required|integer|min:1',
                 'status' => 'required|in:draft,published,sold_out,cancelled',
                 'type' => 'required|in:lokal,internasional',
-                'trailer' => 'nullable|string',
+                'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
+
             ]);
 
             $konser = Konser::create($validated);
@@ -117,7 +114,7 @@ class KonserController extends Controller
      */
     public function show(Konser $konser)
     {
-        return response()->json($konser);
+        return response()->json($this->formatKonserResponse($konser));
     }
 
     public function edit(Konser $konser)
@@ -131,12 +128,6 @@ class KonserController extends Controller
      */
     public function update(Request $request, Konser $konser)
     {
-        // FIX BUG: Bersihkan format titik harga pada proses update form web
-        if ($request->has('price')) {
-            $cleanPrice = str_replace('.', '', $request->price);
-            $request->merge(['price' => $cleanPrice]);
-        }
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'artists_id' => 'nullable|exists:artists,id',
@@ -146,30 +137,25 @@ class KonserController extends Controller
             'venue' => 'required|string|max:255',
             'city' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'trailer' => 'nullable|file|mimes:mp4,avi,mov',
             'price' => 'required|numeric|min:0',
             'capacity' => 'required|integer|min:1',
             'status' => 'required|in:draft,published,sold_out,cancelled',
             'type' => 'required|in:lokal,internasional',
         ]);
 
-        // FIX: Update Poster ke Cloudinary
         if ($request->hasFile('image')) {
-            $cloudinaryImage = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'konsers'
-            ]);
-            $validated['image'] = $cloudinaryImage->getSecurePath();
+            $path = $request->file('image')->store('konsers/img');
+            $validated['image'] = $path;
         }
 
-        // FIX: Update Video Trailer ke Cloudinary
         if ($request->hasFile('trailer')) {
-            $cloudinaryVideo = Cloudinary::upload($request->file('trailer')->getRealPath(), [
-                'folder' => 'konsers/trailers',
-                'resource_type' => 'video'
-            ]);
-            $validated['trailer'] = $cloudinaryVideo->getSecurePath();
+            $path = $request->file('trailer')->store('konsers/trailers');
+            $validated['trailer'] = $path;
         }
+
+        // dd($validated); // Debugging line to inspect the validated data
 
         $konser->update($validated);
 
@@ -219,8 +205,9 @@ class KonserController extends Controller
     {
         $konser->delete();
 
-        // FIX: Kembalikan ke redirect halaman admin, bukan response JSON
-        return redirect('/admin')->with('success', 'Konser berhasil dihapus!');
+        return response()->json([
+            'message' => 'Konser berhasil dihapus'
+        ]);
     }
 
     /**
@@ -237,12 +224,33 @@ class KonserController extends Controller
         }
     }
 
+    private function resolveSupabaseUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '' || $path === '0') {
+            return null;
+        }
+
+        try {
+            if (! Storage::disk('supabase')->fileExists($path)) {
+                return null;
+            }
+
+            return Storage::disk('supabase')->url($path);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     /**
      * Get konsers by type
      */
     public function getByType($type)
     {
-        $konsers = Konser::with('artist')->where('type', $type)->orderBy('date', 'asc')->get();
+        $konsers = Konser::with('artist')->where('type', $type)->orderBy('date', 'asc')->get()->map(function (Konser $konser) {
+            return $this->formatKonserResponse($konser);
+        });
         return response()->json($konsers);
     }
 
@@ -251,7 +259,17 @@ class KonserController extends Controller
      */
     public function getPublished()
     {
-        $konsers = Konser::with('artist')->where('status', 'published')->orderBy('date', 'asc')->get();
+        $konsers = Konser::with('artist')->where('status', 'published')->orderBy('date', 'asc')->get()->map(function (Konser $konser) {
+            return $this->formatKonserResponse($konser);
+        });
         return response()->json($konsers);
+    }
+
+    private function formatKonserResponse(Konser $konser): array
+    {
+        return array_merge($konser->toArray(), [
+            'image_url' => $this->resolveSupabaseUrl($konser->image),
+            'trailer_url' => $this->resolveSupabaseUrl($konser->trailer),
+        ]);
     }
 }

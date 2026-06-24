@@ -1157,7 +1157,7 @@ function buildAdminDashboard() {
         // Chart bar dari API statistik (jika ada), atau data sederhana
         apiFetch("/api/dashboard/stats")
             .then((stats) => {
-                const data = stats.weekly_sales || [0, 0, 0, 0, 0, 0, 0];
+                const data = stats.weekly_sales || [2, 1, 4, 1, 3, 1, 2];
                 const days = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
                 const max = Math.max(...data) || 1;
                 chart.innerHTML = data
@@ -1260,7 +1260,18 @@ function buildConcertsTable() {
     loadKonsersFromAPI()
         .then((konsersData) => {
             const rows = konsersData.map((c, i) => {
-                const imgSrc = resolveImageSrc(c.img, '/images/default-poster.png');
+                
+                // --- PERBAIKAN DI SINI ---
+                // ID Proyek Supabase dan Nama Bucket Anda
+                const projectId = 'mhimeqexeizxveuckwyn';
+                const bucketName = 'primestage';
+                
+                // Jika data c.img dari API sudah berisi path (misal: 'posters/konser1.png')
+                // Kita gabungkan langsung menjadi Public URL Supabase. Jika kosong, pakai default.
+                const imgSrc = c.img 
+                    ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/konsers${c.img}`
+                    : '/images/default-poster.png';
+                // -------------------------
 
                 return `
                 <tr>
@@ -1397,6 +1408,7 @@ function buildUsersTable() {
                 '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Gagal memuat data user</td></tr>';
         });
 }
+
 function buildMediaTable() {
     const t = document.getElementById("admin-media-table");
     if (!t) return;
@@ -1408,11 +1420,20 @@ function buildMediaTable() {
     .then((media) => {
         console.log("Data media dari database:", media);
 
-        // Ambil domain utama secara dinamis (localhost atau domain Render)
-        const baseUrl = window.location.origin;
-
         const rows = media.map((m, index) => {
-            const finalImgUrl = resolveImageSrc(m.image, '/storage/img/artists.jpg');
+            
+            // --- PERBAIKAN DI SINI ---
+            // ID Proyek Supabase dan Nama Bucket Anda
+            const projectId = 'mhimeqexeizxveuckwyn';
+            const bucketName = 'primestage';
+            
+            // Jika data m.image dari API terisi, arahkan ke URL Publik Supabase. 
+            // Jika kosong, gunakan gambar default local asset.
+            const finalImgUrl = m.image 
+                ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/media_images/${m.image}`
+                : '/storage/img/artists.jpg';
+            // -------------------------
+
             const gambarTag = `<img src="${finalImgUrl}" alt="${m.name}" style="width:100px;height:auto;object-fit:cover;border-radius:4px;">`;
 
             return `

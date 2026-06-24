@@ -10,7 +10,10 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware) {
+        // 1. TAMBAHKAN BARIS INI UNTUK MENGAKTIFKAN TRUST PROXIES DI RENDER
+        $middleware->trustProxies(at: '*');
+
         // Register custom middleware aliases
         $middleware->alias([
             // Admin protection middleware
@@ -18,6 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/register',
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

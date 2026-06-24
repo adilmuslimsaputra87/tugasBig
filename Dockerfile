@@ -34,9 +34,13 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-RUN apache2ctl -M
-RUN ls -lah /etc/apache2/mods-enabled/
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
+           /etc/apache2/mods-enabled/mpm_event.conf \
+           /etc/apache2/mods-enabled/mpm_worker.load \
+           /etc/apache2/mods-enabled/mpm_worker.conf
+
+RUN a2enmod mpm_prefork
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["bash", "-c", "apache2ctl -M && apache2-foreground"]

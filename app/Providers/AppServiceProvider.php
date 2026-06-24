@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL; // <-- WAJIB IMPORT INI DI ATAS
+use Illuminate\Support\Facades\URL; // <-- Pastikan baris ini ada
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,8 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Memaksa HTTPS jika berada di production atau variabel FORCE_HTTPS bernilai true
-        if (config('app.env') === 'production' || env('FORCE_HTTPS') === true) {
+        // Paksa semua URL menggunakan HTTPS jika tidak di komputer lokal
+        if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
     }

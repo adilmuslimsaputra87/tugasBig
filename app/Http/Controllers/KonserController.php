@@ -34,43 +34,61 @@ class KonserController extends Controller
      * Store a newly created resource in storage (Form-based).
      */
     public function store(Request $request)
-    {
-        if ($request->has('price')) {
-            $cleanPrice = str_replace('.', '', $request->price);
-            $request->merge(['price' => $cleanPrice]);
-        }
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'artists_id' => 'required|exists:artists,id',
-            'genre' => 'nullable|string|max:100',
-            'date' => 'required|date',
-            'time' => 'required|date_format:H:i',
-            'venue' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
-            'price' => 'required|numeric|min:0',
-            'capacity' => 'required|integer|min:1',
-            'status' => 'required|in:draft,published,sold_out,cancelled',
-            'type' => 'required|in:lokal,internasional',
-        ]);
-
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('konsers/img');
-            $validated['image'] = $path;
-        }
-
-        if ($request->hasFile('trailer')) {
-            $path = $request->file('trailer')->store('konsers/trailers');
-            $validated['trailer'] = $path;
-        }
-// dd($validated);
-        $konser = Konser::create($validated);
-
-        return redirect('/admin')->with('success', 'Konser berhasil ditambahkan!');
+{
+    if ($request->has('price')) {
+        $cleanPrice = str_replace('.', '', $request->price);
+        $request->merge(['price' => $cleanPrice]);
     }
+
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'artists_id' => 'required|exists:artists,id',
+        'genre' => 'nullable|string|max:100',
+        'date' => 'required|date',
+        'time' => 'required|date_format:H:i',
+        'venue' => 'required|string|max:255',
+        'city' => 'required|string|max:100',
+        'description' => 'nullable|string',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'trailer' => 'nullable|file|mimes:mp4,avi,mov|max:10240',
+        'price' => 'required|numeric|min:0',
+        'capacity' => 'required|integer|min:1',
+        'status' => 'required|in:draft,published,sold_out,cancelled',
+        'type' => 'required|in:lokal,internasional',
+    ]);
+
+    // Projek ID dan nama bucket sesuai gambar Supabase Anda
+    $projectId = 'mhimeqexeizxveuckwyn';
+    $bucketName = 'primestage';
+
+    // 1. Proses Upload Image ke Folder 'konsers'
+    if ($request->hasFile('image')) {
+        $file = $request->file('image');
+        // Membuat nama file unik agar tidak bentrok
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        
+        // Simpan ke storage (jika pakai driver supabase) atau simpan nama filenya saja untuk public URL
+        // Sesuaikan parameter kedua 'supabase' jika Anda sudah mendefinisikan disk khusus di config/filesystems.php
+        $path = $file->storeAs('konsers', $fileName, 'supabase'); 
+        
+        // Jika Anda hanya menyimpan nama file atau full URL-nya ke database:
+        $validated['image'] = "https://{$projectId}.storage.supabase.co/storage/v1/object/public/{$bucketName}/konsers/{$fileName}";
+    }
+
+    // 2. Proses Upload Trailer ke Folder 'trailers'
+    if ($request->hasFile('trailer')) {
+        $file = $request->file('trailer');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        
+        $path = $file->storeAs('trailers', $fileName, 'supabase');
+        
+        $validated['trailer'] = "https://{$projectId}.storage.supabase.co/storage/v1/object/public/{$bucketName}/trailers/{$fileName}";
+    }
+
+    $konser = Konser::create($validated);
+
+    return redirect('/admin')->with('success', 'Konser berhasil ditambahkan!');
+}
 
     /**
      * Store via REST API

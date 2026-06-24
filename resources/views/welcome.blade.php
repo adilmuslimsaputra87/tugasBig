@@ -566,7 +566,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <body data-notif-success="{{ session('success') }}" data-notif-error="{{ $errors->first('email') }}">
-        <script src="{{ asset('js/script.js') }}"></script>
+<script src="{{ secure_asset('js/script.js') }}"></script>
     </body>
 
 </body>

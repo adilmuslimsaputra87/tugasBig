@@ -232,7 +232,7 @@ async function loadKonsersFromAPI() {
                 day: "numeric",
             }),
             time: k.time ? k.time.substring(0, 5) + " WIB" : "19.00 WIB",
-            img: k.image_url ||
+            img: k.image ||
                 "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
             trailer: k.trailer || "tidak ada vid",
             price: parseInt(k.price) || 0,

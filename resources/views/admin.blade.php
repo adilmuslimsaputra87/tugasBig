@@ -262,7 +262,7 @@
         </tr>
     </thead>
     <tbody>
-        @forelse($konsers as $k)
+        @forelse($konser as $k)
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 

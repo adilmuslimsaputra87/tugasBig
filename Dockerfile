@@ -34,6 +34,9 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 
+RUN apache2ctl -M
+RUN ls -lah /etc/apache2/mods-enabled/
+
 EXPOSE 80
 
 CMD ["apache2-foreground"]

@@ -232,8 +232,7 @@ async function loadKonsersFromAPI() {
                 day: "numeric",
             }),
             time: k.time ? k.time.substring(0, 5) + " WIB" : "19.00 WIB",
-            image: k.image ||
-                "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
+            image: k.image,
             trailer: k.trailer || "tidak ada vid",
             price: parseInt(k.price) || 0,
             type: k.type || "lokal",
@@ -405,8 +404,7 @@ async function loadArtistsFromAPI() {
             id: a.id,
             name: a.name,
             genre: a.genre || "Pop",
-            image: a.image ||
-                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80",
+            image: a.image,
             concerts: a.concerts_count || 0,
             country: a.country || "indonesia",
             bio: a.bio || "",

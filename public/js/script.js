@@ -1273,7 +1273,7 @@ function buildConcertsTable() {
                 // Jika data c.img dari API sudah berisi path (misal: 'posters/konser1.png')
                 // Kita gabungkan langsung menjadi Public URL Supabase. Jika kosong, pakai default.
                 const imgSrc = c.image 
-                    ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/konsers/${c.img}`
+                    ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/konsers/${c.image}`
                     : '/images/default-poster.png';
                 // -------------------------
 

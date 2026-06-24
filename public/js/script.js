@@ -43,16 +43,14 @@ async function apiFetch(url, options = {}) {
 }
 
 function resolveImageSrc(src, fallback = "/images/default-poster.png") {
-    if (!src || src === "0") {
-        return `${window.location.origin}${fallback}`;
-    }
-
-    if (typeof src !== "string") {
+    // 1. Jika data kosong, gunakan gambar fallback bawaan (lokal)
+    if (!src || src === "0" || typeof src !== "string") {
         return `${window.location.origin}${fallback}`;
     }
 
     const trimmed = src.trim();
 
+    // 2. Jika data dari database sudah berupa URL utuh (http/https), langsung gunakan
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         return trimmed;
     }
@@ -61,6 +59,7 @@ function resolveImageSrc(src, fallback = "/images/default-poster.png") {
         return `${window.location.protocol}${trimmed}`;
     }
 
+    // 3. Bersihkan sisa-sisa string "/storage/" atau "storage/" lama jika masih ada di DB
     let normalized = trimmed;
     if (normalized.startsWith("/storage/")) {
         normalized = normalized.slice(9);
@@ -68,9 +67,14 @@ function resolveImageSrc(src, fallback = "/images/default-poster.png") {
         normalized = normalized.slice(8);
     }
 
-    return `${window.location.origin}/storage/${normalized}`;
-}
+    // 4. --- PENGALIHAN KE SUPABASE ---
+    // Konfigurasi Project ID dan nama Bucket Supabase Anda
+    const projectId = 'mhimeqexeizxveuckwyn';
+    const bucketName = 'primestage';
 
+    // Menghasilkan Public Object URL Supabase secara otomatis
+    return `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/${normalized}`;
+}
 // ====== AUTH ======
 function openModal(type) {
     if (type === "login" || type === "register") {
@@ -1268,8 +1272,8 @@ function buildConcertsTable() {
                 
                 // Jika data c.img dari API sudah berisi path (misal: 'posters/konser1.png')
                 // Kita gabungkan langsung menjadi Public URL Supabase. Jika kosong, pakai default.
-                const imgSrc = c.img 
-                    ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/konsers${c.img}`
+                const imgSrc = c.image 
+                    ? `https://${projectId}.storage.supabase.co/storage/v1/object/public/${bucketName}/konsers/${c.img}`
                     : '/images/default-poster.png';
                 // -------------------------
 

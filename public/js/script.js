@@ -232,7 +232,7 @@ async function loadKonsersFromAPI() {
                 day: "numeric",
             }),
             time: k.time ? k.time.substring(0, 5) + " WIB" : "19.00 WIB",
-            img: k.image ||
+            image: k.image ||
                 "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
             trailer: k.trailer || "tidak ada vid",
             price: parseInt(k.price) || 0,
@@ -405,7 +405,7 @@ async function loadArtistsFromAPI() {
             id: a.id,
             name: a.name,
             genre: a.genre || "Pop",
-            img: a.image_url ||
+            image: a.image ||
                 "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80",
             concerts: a.concerts_count || 0,
             country: a.country || "indonesia",
@@ -684,7 +684,7 @@ function concertCardHTML(c, i) {
     data-price="${c.price || 0}"
     data-aos style="animation-delay:${i * 0.08}s">
     <div class="concert-card-img">
-      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist}" loading="lazy">
+      <img src="${resolveImageSrc(c.image, '/images/default-poster.png')}" alt="${c.artist}" loading="lazy">
       <div class="concert-card-overlay"></div>
       ${badge}
       <div class="concert-card-wishlist" onclick="event.stopPropagation();toggleWishlist(this)"><i class="fas fa-heart"></i></div>
@@ -732,7 +732,7 @@ function renderHomeConcerts() {
                 .map(
                     (ar) => `
         <div class="artist-card" onclick="navigate('artists')">
-          <img class="artist-card-img" src="${resolveImageSrc(ar.img, '/images/default-poster.png')}" alt="${ar.name}">
+          <img class="artist-card-img" src="${resolveImageSrc(ar.image, '/images/default-poster.png')}" alt="${ar.name}">
           <div class="artist-card-name">${ar.name}</div>
           <div class="artist-card-genre">${ar.genre}</div>
         </div>`,
@@ -750,7 +750,7 @@ function renderHeroFeatured(concerts) {
         .map(
             (c) => `
     <div class="hero-card-mini" onclick="openConcertDetail(${c.id})">
-      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist}">
+      <img src="${resolveImageSrc(c.image, '/images/default-poster.png')}" alt="${c.artist}">
       <div class="hero-card-mini-info">
         <div class="hero-card-mini-artist">${c.artist}</div>
         <div class="hero-card-mini-date"><i class="fas fa-calendar-alt" style="color:var(--red);margin-right:4px;"></i>${c.date} · ${c.city}</div>
@@ -769,7 +769,7 @@ function renderVideoSection(concerts) {
         .map(
             (c) => `
     <div class="video-item" onclick="openConcertDetail(${c.id})">
-      <img src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="${c.artist} - ${c.title}">
+      <img src="${resolveImageSrc(c.image, '/images/default-poster.png')}" alt="${c.artist} - ${c.title}">
       <div class="video-play-btn"><i class="fas fa-play"></i></div>
       <div class="video-item-info">
         <div class="video-item-title">${c.artist} — ${c.title}</div>
@@ -857,7 +857,7 @@ function openConcertDetail(id) {
         }
 
         // Konten utama detail konser
-        document.getElementById("detail-bg-img").src = resolveImageSrc(c.img, '/images/default-poster.png');
+        document.getElementById("detail-bg-img").src = resolveImageSrc(c.image, '/images/default-poster.png');
         document.getElementById("detail-badge").textContent = c.genre.toUpperCase();
         document.getElementById("detail-title").textContent = c.title;
         document.getElementById("detail-artist").querySelector("span").textContent = c.artist;
@@ -881,7 +881,7 @@ function openConcertDetail(id) {
             .join("");
 
         // Konten media trailer di halaman detail
-        document.getElementById("detail-gallery-img").src = resolveImageSrc(c.img, '/images/default-poster.png');
+        document.getElementById("detail-gallery-img").src = resolveImageSrc(c.image, '/images/default-poster.png');
         document.getElementById("detail-trailer").src = c.trailer_url || '';
         document.getElementById("video-source").src = c.trailer_url || '';
         document.getElementById("detail-trailer-title").textContent = c.artist + " — Official Trailer";
@@ -1007,7 +1007,7 @@ function goCheckout() {
         const sub = unit * selectedQty;
         const total = sub + 10000;
 
-        if (checkoutImg) checkoutImg.src = resolveImageSrc(c.img, '/images/default-poster.png');
+        if (checkoutImg) checkoutImg.src = resolveImageSrc(c.image, '/images/default-poster.png');
         if (checkoutTitle)
             checkoutTitle.textContent = c.artist + " — " + c.title;
         if (checkoutMeta) checkoutMeta.textContent = c.date + " · " + c.venue;
@@ -1048,7 +1048,7 @@ function filterArtists() {
                         .map(
                                 (a) => `
             <div class="artist-full-card">
-                <img class="artist-full-img" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
+                <img class="artist-full-img" src="${resolveImageSrc(a.image, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
                 <div class="artist-full-name">${a.name}</div>
                 <div class="artist-full-genre">${a.genre}</div>
                 <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
@@ -1074,7 +1074,7 @@ function setArtistFilter(val, btn) {
                         .map(
                                 (a) => `
             <div class="artist-full-card">
-                <img class="artist-full-img" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
+                <img class="artist-full-img" src="${resolveImageSrc(a.image, '/images/default-poster.png')}" alt="${a.name}" loading="lazy">
                 <div class="artist-full-name">${a.name}</div>
                 <div class="artist-full-genre">${a.genre}</div>
                 <div class="artist-full-concerts"><i class="fas fa-music" style="margin-right:4px;"></i>${a.concerts} konser</div>
@@ -1106,7 +1106,7 @@ async function renderGallery() {
                 (k) => `
         <div data-id="${k.id}" style="break-inside:avoid;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:var(--transition);"
              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-          <img src="${resolveImageSrc(k.img, '/images/default-poster.png')}" style="width:100%;display:block;" loading="lazy">
+          <img src="${resolveImageSrc(k.image, '/images/default-poster.png')}" style="width:100%;display:block;" loading="lazy">
         </div>`
             )
             .join("");
@@ -1215,7 +1215,7 @@ function buildAdminDashboard() {
                         (c, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><img class="concert-thumb" src="${resolveImageSrc(c.img, '/images/default-poster.png')}" alt="" style="width:40px;height:40px;object-fit:cover;"></td>
+            <td><img class="concert-thumb" src="${resolveImageSrc(c.image, '/images/default-poster.png')}" alt="" style="width:40px;height:40px;object-fit:cover;"></td>
             <td><div class="td-name">${c.title}</div></td>
             <td class="td-artist">${c.artist}</td>
             <td style="font-size:13px;">${c.date}</td>
@@ -1242,7 +1242,7 @@ function buildAdminDashboard() {
                         (a, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><img class="concert-thumb" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
+            <td><img class="concert-thumb" src="${resolveImageSrc(a.image, '/images/default-poster.png')}" alt="" style="border-radius:50%;width:40px;height:40px;object-fit:cover;"></td>
             <td><div class="td-name">${a.name}</div></td>
             <td>${a.genre}</td>
         </tr>`,
@@ -1360,7 +1360,7 @@ async function buildArtistsTable() {
                     <tr>
                         <td>${i + 1}</td>
                         <td>
-                            <img class="concert-thumb" src="${resolveImageSrc(a.img, '/images/default-poster.png')}" alt="${a.name}" style="border-radius:50%;width:40px;height:40px;object-fit:cover;">
+                            <img class="concert-thumb" src="${resolveImageSrc(a.image, '/images/default-poster.png')}" alt="${a.name}" style="border-radius:50%;width:40px;height:40px;object-fit:cover;">
                         </td>
                         <td><div class="td-name">${a.name}</div></td>
                         <td>${a.genre}</td>

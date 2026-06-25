@@ -481,7 +481,7 @@
     <!-- Auth Modal -->
     <div class="modal-overlay" id="modal-auth">
         <div class="modal">
-            <button class="modal-close" onclick="closeModal('auth')"><i class="fas fa-times"></i></button>
+            <button class="modal-close" onclick="closeModal('authe')"><i class="fas fa-times"></i></button>
             <div class="modal-title">PRIMESTAGE</div>
             <div class="modal-subtitle">Platform tiket konser premium</div>
             <div class="modal-tabs">

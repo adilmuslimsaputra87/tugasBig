@@ -880,8 +880,8 @@ function openConcertDetail(id) {
 
         // Konten media trailer di halaman detail
         document.getElementById("detail-gallery-img").src = resolveImageSrc(c.image, '/images/default-poster.png');
-        document.getElementById("detail-trailer").src = c.trailer_url || '';
-        document.getElementById("video-source").src = c.trailer_url || '';
+        document.getElementById("detail-trailer").src = c.trailer || '';
+        document.getElementById("video-source").src = c.trailer || '';
         document.getElementById("detail-trailer-title").textContent = c.artist + " — Official Trailer";
 
         // 4. Load kategori tiket dari API secara dinamis

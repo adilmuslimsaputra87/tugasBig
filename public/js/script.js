@@ -94,8 +94,6 @@ function closeModal(type) {
         if (type === "authe") {
         const modalAuth = document.getElementById("modal-auth");
         if (modalAuth) {
-            modalAuth.classList.remove("show");
-            // Cadangan jika Anda tidak pakai class .show di CSS:
             modalAuth.style.display = "none"; 
         }
     }

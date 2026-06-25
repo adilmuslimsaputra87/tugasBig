@@ -98,6 +98,7 @@ function closeModal(type) {
             // Cadangan jika Anda tidak pakai class .show di CSS:
             modalAuth.style.display = "none"; 
         }
+    }
     if (type === "crud")
         document.getElementById("modal-crud").classList.remove("show");
     if (type === "video") {

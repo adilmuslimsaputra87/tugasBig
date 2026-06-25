@@ -91,7 +91,13 @@ function closeModal(type) {
     if (type === "transaction")
         document.getElementById("modal-transaction").classList.remove("show");
     if (type === "authe")
-        document.getElementById("modal-auth").classList.remove("show");
+        if (type === "authe") {
+        const modalAuth = document.getElementById("modal-auth");
+        if (modalAuth) {
+            modalAuth.classList.remove("show");
+            // Cadangan jika Anda tidak pakai class .show di CSS:
+            modalAuth.style.display = "none"; 
+        }
     if (type === "crud")
         document.getElementById("modal-crud").classList.remove("show");
     if (type === "video") {

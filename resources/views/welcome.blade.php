@@ -481,8 +481,8 @@
     <!-- Auth Modal -->
     <div class="modal-overlay" id="modal-auth">
         <div class="modal">
-            <button class="modal-close" onclick="alert('Tombol diklik!'); closeModal('authe');">
-                <i class="fas fa-times"></i> Klik Sini
+            <button class="modal-close" onclick="closeModal('authe');">
+                <i class="fas fa-times"></i>
             </button>
             <div class="modal-title">PRIMESTAGE</div>
             <div class="modal-subtitle">Platform tiket konser premium</div>

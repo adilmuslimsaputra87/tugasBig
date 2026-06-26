@@ -365,7 +365,7 @@
 
             <button class="filter-btn active" onclick="setArtistFilter('all',this)">Semua</button>
             <button class="filter-btn" onclick="setArtistFilter('indonesia',this)">Indonesia</button>
-            <button class="filter-btn" onclick="setArtistFilter('international',this)">International</button>
+            <button class="filter-btn" onclick="setArtistFilter('internasional',this)">International</button>
         </div>
         <div class="artists-grid" id="artists-grid"></div>
     </div>

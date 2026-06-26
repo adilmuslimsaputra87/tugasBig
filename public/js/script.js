@@ -91,12 +91,7 @@ function closeModal(type) {
     if (type === "transaction")
         document.getElementById("modal-transaction").classList.remove("show");
     if (type === "authe")
-        if (type === "authe") {
-        const modalAuth = document.getElementById("modal-auth");
-        if (modalAuth) {
-            modalAuth.style.display = "none"; 
-        }
-    }
+        document.getElementById("modal-auth").style.display = "none"; 
     if (type === "crud")
         document.getElementById("modal-crud").classList.remove("show");
     if (type === "video") {
@@ -1845,21 +1840,6 @@ function closeVideoModal() {
     }
 }
 
-function closeModal(type) {
-    if (type === "video") {
-        const modalVideo = document.getElementById("modal-video");
-        const iframe = document.getElementById("yt-iframe");
-
-        if (modalVideo) {
-            modalVideo.classList.remove("show");
-        }
-        // WAJIB: Hapus src iframe saat modal ditutup agar video berhenti berputar di background
-        if (iframe) {
-            iframe.src = "";
-        }
-    }
-    // ... baris kode closeModal untuk type lain (auth, crud, gallery) tetap biarkan seperti semula
-}
 // ====== WISHLIST ======
 function toggleWishlist(el) {
     const icon = el.querySelector("i");

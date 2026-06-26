@@ -91,7 +91,7 @@ function closeModal(type) {
     if (type === "transaction")
         document.getElementById("modal-transaction").classList.remove("show");
     if (type === "authe")
-        document.getElementById("modal-auth").style.display = "none"; 
+        document.getElementById("modal-auth").classList.remove("show");
     if (type === "crud")
         document.getElementById("modal-crud").classList.remove("show");
     if (type === "video") {
